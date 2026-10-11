@@ -1,0 +1,6 @@
+@{ ViewData["Title"] = "Complete setup first"; }
+<div class="page-header"><div><h1>Complete setup first</h1><p>@ViewData["SetupMessage"]</p></div></div>
+<section class="content-card p-4">
+    <a asp-controller="@ViewData["SetupController"]" asp-action="@ViewData["SetupAction"]" asp-route-returnToEmployee="@ViewData["ReturnToEmployee"]" class="btn btn-primary">@ViewData["SetupLabel"]</a>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Back to dashboard</a>
+</section>

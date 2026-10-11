@@ -1,0 +1,7 @@
+@model IReadOnlyList<ITC.TrainingPortal.Application.DTOs.QuizDto>
+@{ViewData["Title"]="Exams";}
+<div class="page-header"><div><div class="eyebrow">Assessment management</div><h1>Exams</h1><p>Create a related exam for any training program.</p></div><a asp-action="Create" class="btn btn-primary">Create exam</a></div>
+<section class="content-card directory-card"><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Exam</th><th>Training program</th><th>Passing score</th><th>Questions</th><th>Status</th><th></th></tr></thead><tbody>
+@foreach(var item in Model){<tr><td>@item.Title</td><td>@item.TrainingProgramTitle</td><td>@item.PassingScorePercentage%</td><td>@item.QuestionCount</td><td>@(item.QuestionCount == 0 ? "Draft - add questions" : item.IsActive ? "Active" : "Inactive")</td><td class="text-end"><a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Manage</a></td></tr>}
+@if(Model.Count==0){<tr><td colspan="6" class="text-center text-muted py-4">No exams configured.</td></tr>}
+</tbody></table></div></section>

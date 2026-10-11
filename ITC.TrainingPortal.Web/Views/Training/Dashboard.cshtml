@@ -1,0 +1,25 @@
+@model IReadOnlyList<ITC.TrainingPortal.Web.Services.ComplianceRow>
+@{ ViewData["Title"] = "Dashboard"; var remaining=Model.Where(x=>x.Status!="Completed").OrderBy(x=>x.DueDate ?? DateTime.MaxValue).ToList(); }
+<div class="page-header"><div><div class="eyebrow">My learning</div><h1>Learning dashboard</h1><p>Your training overview and next steps.</p></div><a asp-action="MyTraining" class="btn btn-outline-primary">My Training</a></div>
+<div class="metric-grid">
+    <div class="metric-card"><span>Assigned programs</span><strong>@Model.Count</strong></div>
+    <div class="metric-card"><span>Completed</span><strong>@Model.Count(x=>x.Status=="Completed")</strong></div>
+    <div class="metric-card"><span>In progress</span><strong>@Model.Count(x=>x.Status=="In progress")</strong></div>
+    <div class="metric-card"><span>Overdue</span><strong>@Model.Count(x=>x.Status=="Overdue")</strong></div>
+</div>
+<section class="content-card p-4 my-3"><h2 class="h4">Continue learning</h2>
+@if(Model.Count==0){<p>No training has been assigned yet.</p>}
+else if(remaining.Count==0){<p>All assigned training is complete.</p><a asp-controller="Quiz" asp-action="Results" class="btn btn-primary">View results</a>}
+else {
+    var next=remaining[0];
+    <h3 class="h5">@next.Program</h3><p>@next.CompletedVideos / @next.TotalVideos videos completed. Exam: @next.Exam.</p>
+    @if(next.DueDate.HasValue){<p>Due @next.DueDate.Value.ToString("dd MMM yyyy") (UTC)</p>}
+    @if(next.Exam=="In progress"){<a asp-controller="Quiz" asp-action="Mine" class="btn btn-primary">Resume exam</a>}
+    else {<a asp-action="Content" asp-route-id="@next.ProgramId" class="btn btn-primary">Continue learning</a>}
+}
+</section>
+<section class="content-card p-4"><h2 class="h4">Upcoming deadlines</h2>
+@if(!remaining.Any(x=>x.DueDate.HasValue)){<p>No outstanding deadlines.</p>}
+else {<ul>@foreach(var item in remaining.Where(x=>x.DueDate.HasValue).Take(5)){<li><a asp-action="Content" asp-route-id="@item.ProgramId">@item.Program</a> — @item.DueDate!.Value.ToString("dd MMM yyyy") (UTC) — @item.Status</li>}</ul>}
+<a asp-controller="Quiz" asp-action="Results">View saved exam results</a> · <a asp-controller="Progress" asp-action="Mine">View overall progress</a>
+</section>

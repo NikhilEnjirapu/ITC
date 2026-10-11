@@ -1,0 +1,26 @@
+@model ITC.TrainingPortal.Application.DTOs.DepartmentDto
+@{
+    ViewData["Title"] = "Delete Department";
+}
+
+<h2 class="fw-bold mb-4 text-danger">Delete Department</h2>
+
+<div class="glass-panel p-4 mb-4">
+    <h4 class="mb-3">Are you sure you want to delete this?</h4>
+    <dl class="row mb-0">
+        <dt class="col-sm-3 text-muted">ID</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+        
+        <dt class="col-sm-3 text-muted">Name</dt>
+        <dd class="col-sm-9 fw-bold">@Model.Name</dd>
+        
+        <dt class="col-sm-3 text-muted">Description</dt>
+        <dd class="col-sm-9">@Model.Description</dd>
+    </dl>
+</div>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger me-2">Yes, Delete</button>
+    <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
+</form>

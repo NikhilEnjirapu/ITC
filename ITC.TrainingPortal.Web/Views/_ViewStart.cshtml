@@ -1,0 +1,3 @@
+﻿@{
+    Layout = Context.Request.Path.StartsWithSegments("/employee") ? "_EmployeeLayout" : "_AdminLayout";
+}

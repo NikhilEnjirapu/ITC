@@ -1,0 +1,3 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingAssignmentDto
+@{ViewData["Title"]="Assign Training";}<h2>Assign Training</h2><div class="glass-panel p-4"><p>Choose a ready program, then eligible employees and a due date. Incomplete programs show the setup step still required.</p><p><a asp-controller="TrainingProgram" asp-action="Create">Create a new program</a> | <a asp-controller="TrainingProgram" asp-action="Index">Review program setup and exam availability</a></p><form asp-action="Create" method="post"><partial name="_Form" model="Model"/><button class="btn btn-primary">Assign training</button> <a asp-action="Index" class="btn btn-outline-light">Cancel</a></form></div>
+@section Scripts{<partial name="_ValidationScriptsPartial"/>}

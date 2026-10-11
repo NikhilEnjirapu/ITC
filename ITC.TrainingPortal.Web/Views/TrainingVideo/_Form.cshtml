@@ -1,0 +1,26 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingVideoDto
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if (Model.Id > 0) { <input type="hidden" asp-for="Id"/><input type="hidden" asp-for="RowVersion"/> }
+
+<div class="mb-3"><label asp-for="TrainingProgramId" class="form-label"></label><select asp-for="TrainingProgramId" asp-items="ViewBag.Programs" class="form-control"><option value="">-- Select Program --</option></select><span asp-validation-for="TrainingProgramId" class="text-danger"></span></div>
+<div class="mb-3">
+    <label for="videoFile" class="form-label">@(Model.Id > 0 ? "Replace video (optional)" : "Upload video")</label>
+    <input type="file" id="videoFile" name="videoFile" accept=".mp4,.webm,video/mp4,video/webm" class="form-control" aria-describedby="video-help video-file-status" />
+    <div id="video-help" class="form-text">Choose an MP4 or WebM video, up to 500 MB. @(Model.Id > 0 ? "Leave this empty to keep the current video. Videos cannot be replaced after viewing has started." : "Videos belong to the selected training program.")</div>
+    <span class="text-danger" data-valmsg-for="videoFile" data-valmsg-replace="true"></span>
+    <div id="video-file-status" class="form-text" role="status" aria-live="polite"></div>
+    <video id="video-preview" controls preload="metadata" hidden class="w-100 mt-3" style="max-height:280px" aria-label="Selected video preview"></video>
+</div>
+
+
+<div class="mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control"/><span asp-validation-for="Title" class="text-danger"></span></div>
+
+<div class="mb-3"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control"></textarea><span asp-validation-for="Description" class="text-danger"></span></div>
+<details class="mb-3"><summary>Use an existing video file (optional)</summary>
+<div class="mt-2"><label asp-for="VideoUrl" class="form-label"></label><input asp-for="VideoUrl" class="form-control" data-val="false"/><span asp-validation-for="VideoUrl" class="text-danger"></span><div class="form-text">Only needed for a file already stored on the server. Uploading a file takes priority.</div></div></details>
+
+<div class="mb-3"><label asp-for="SequenceOrder" class="form-label"></label><input asp-for="SequenceOrder" class="form-control"/><span asp-validation-for="SequenceOrder" class="text-danger"></span></div>
+
+<div class="mb-3"><label asp-for="DurationSeconds" class="form-label"></label><input asp-for="DurationSeconds" class="form-control"/><span asp-validation-for="DurationSeconds" class="text-danger"></span><div class="form-text">Filled from the selected video when available. Check the duration before saving.</div></div>
+
+<div id="video-save-status" class="alert alert-info" hidden role="status">Uploading and saving your video. Please keep this page open.</div>

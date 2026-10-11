@@ -1,0 +1,20 @@
+# Generated .NET output
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+
+# Local runtime data
+**/App_Data/Logs/
+**/App_Data/Videos/
+**/App_Data/Keys/
+
+# Local IDE settings and credentials
+.vs/
+.idea/
+*.user
+*.suo
+.env
+.env.*
+!.env.example
+**/appsettings.Production.json

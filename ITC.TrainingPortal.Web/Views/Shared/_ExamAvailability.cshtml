@@ -1,0 +1,14 @@
+@model ITC.TrainingPortal.Application.DTOs.ExamAccessDto
+<section id="examAvailability" class="content-card p-3 my-3 @(Model.Results.Count == 0 && Model.IsUnlocked && Model.IsActive ? "exam-available" : "")"
+         data-availability-url="@Url.Action("Availability", "Quiz", new { id = Model.QuizId })" aria-live="polite">
+    @if(Model.Results.Count > 0 && !Model.ActiveAttemptId.HasValue) { <p>Exam completed</p><a asp-controller="Quiz" asp-action="Result" asp-route-id="@Model.Results[0].Id" target="_top" class="btn btn-primary">View result</a> } else if(Model.IsUnlocked && Model.IsActive)
+    {
+        <p class="mb-2">Exam Unlocked</p>
+        <a asp-controller="Quiz" asp-action="Introduction" asp-route-id="@Model.QuizId" target="_top" class="btn btn-primary">Start Exam</a>
+    }
+    else
+    {
+        <strong>Exam locked</strong>
+        <p class="mb-0">@(Model.IsActive ? Model.UnlockMessage : "This exam is currently inactive.")</p>
+    }
+</section>

@@ -1,0 +1,5 @@
+@model ITC.TrainingPortal.Application.DTOs.ExamAccessDto
+@{ViewData["Title"]=Model.QuizTitle;}<div class="page-header"><div><div class="eyebrow">@Model.TrainingProgramTitle</div><h1>@Model.QuizTitle</h1></div></div>
+@if(TempData["QuizMessage"] is string message){<div class="alert alert-warning">@message</div>}
+<section class="content-card learning-panel"><h2 class="h4">Before you begin</h2><p>This exam contains @Model.QuestionCount questions. Answer every question before submitting. Training videos are unavailable while your attempt is active.</p>
+@if(!Model.IsUnlocked){<div class="alert alert-warning">@Model.UnlockMessage</div>}else if(!Model.IsActive){<div class="alert alert-warning">This exam is currently inactive.</div>}else{<form asp-action="Start" asp-route-id="@Model.QuizId" method="post"><button class="btn btn-primary">@(Model.ActiveAttemptId.HasValue?"Resume exam":"Start Exam")</button></form>}</section>

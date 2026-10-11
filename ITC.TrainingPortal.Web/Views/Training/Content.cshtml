@@ -1,0 +1,14 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingContentDto
+@{ViewData["Title"] = Model.TrainingProgramTitle;}
+<div class="page-header"><div><div class="eyebrow">Assigned training</div><h1>@Model.TrainingProgramTitle</h1><p>Complete each video in sequence.</p></div><a asp-action="MyTraining" class="btn btn-outline-light">My Training</a></div>
+<section class="content-card"><div class="content-card-body"><div class="list-group list-group-flush">
+@for(var i=0;i<Model.Videos.Count;i++){var video=Model.Videos[i];
+<div class="list-group-item d-flex justify-content-between align-items-center py-3"><div><strong>Video @(i+1) of @Model.Videos.Count — @video.Title</strong><div class="small text-muted">@(video.IsCompleted?"Complete":video.IsLocked?"Complete the previous video before continuing.":$"Resume at {video.CurrentPositionSeconds} seconds")</div></div>
+@if(video.IsLocked){<button class="btn btn-outline-secondary" disabled>Locked</button>}else{<a asp-action="Player" asp-route-id="@video.Id" class="btn btn-primary" data-watch-fullscreen>@(video.IsCompleted?"Review":"Watch")</a>}</div>}
+</div></div></section>
+@if(ViewData["ExamAccess"] is ITC.TrainingPortal.Application.DTOs.ExamAccessDto exam) { <partial name="_ExamAvailability" model="exam"/> }
+@section Scripts {
+<script src="~/js/exam-availability.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/employee-fullscreen.css" asp-append-version="true" />
+<script src="~/js/employee-fullscreen.js" asp-append-version="true"></script>
+}

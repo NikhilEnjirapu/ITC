@@ -1,0 +1,2 @@
+@model IReadOnlyList<ITC.TrainingPortal.Web.Services.ComplianceRow>
+@{ViewData["Title"]="Employee progress";}<div class="page-header"><h1>Employee progress</h1><a asp-controller="Report" asp-action="Index" class="btn btn-primary">Filter and export progress</a></div><section class="content-card p-4"><partial name="_ComplianceTable" model="Model"/></section>

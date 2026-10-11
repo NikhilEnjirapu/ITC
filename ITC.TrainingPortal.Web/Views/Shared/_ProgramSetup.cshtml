@@ -1,0 +1,32 @@
+@model ITC.TrainingPortal.Web.Models.TrainingProgramDetailsViewModel
+@inject ITC.TrainingPortal.Web.Services.AdminWorkflowService Workflow
+@{ var readiness = (await Workflow.ProgramsAsync()).Single(x => x.Id == Model.Program.Id); }
+<section class="content-card p-4 mb-3">
+    <h2 class="h5">@(readiness.IsReady ? "Ready to assign" : "Continue program setup")</h2>
+    <ol class="d-flex flex-wrap gap-4 ps-3">
+        <li>Program details: saved</li>
+        <li>Videos: @Model.Videos.Count</li>
+        <li>Exam questions: @(Model.Exam?.QuestionCount ?? 0)</li>
+        <li>Review exam availability</li>
+        <li>Assign employees</li>
+    </ol>
+    <p>@(readiness.Missing ?? "Review when the exam becomes available, then assign this program to eligible employees.")</p>
+    <div class="d-flex flex-wrap gap-2">
+    @if (Model.Videos.Count == 0) {
+        <a asp-controller="TrainingVideo" asp-action="Create" asp-route-programId="@Model.Program.Id" class="btn btn-primary">Add Video</a>
+    } else {
+        <a asp-controller="TrainingVideo" asp-action="Create" asp-route-programId="@Model.Program.Id" class="btn btn-outline-primary">Add Another Video</a>
+        @if (Model.Exam == null) {
+            <a asp-controller="Quiz" asp-action="Create" asp-route-programId="@Model.Program.Id" class="btn btn-primary">Create Exam</a>
+        } else {
+            <a asp-controller="Quiz" asp-action="Details" asp-route-id="@Model.Exam.Id" class="btn @(Model.Exam.QuestionCount == 0 || !Model.Exam.IsActive ? "btn-primary" : "btn-outline-primary")">Manage Exam</a>
+            @if (Model.Exam.QuestionCount > 0) {
+                <a asp-action="Availability" asp-route-id="@Model.Program.Id" class="btn btn-outline-primary">Configure Exam Unlock</a>
+            }
+        }
+    }
+    @if (readiness.IsReady) {
+        <a asp-controller="TrainingAssignment" asp-action="Create" asp-route-programId="@Model.Program.Id" class="btn btn-primary">Review and assign training</a>
+    }
+    </div>
+</section>

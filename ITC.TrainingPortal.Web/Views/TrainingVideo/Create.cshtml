@@ -1,0 +1,3 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingVideoDto
+@{ViewData["Title"]="Add Training Video";}<h2>Add Training Video</h2><div class="glass-panel p-4"><form asp-action="Create" method="post" enctype="multipart/form-data" data-video-upload><partial name="_Form" model="Model"/><button class="btn btn-primary">Save</button> <partial name="_ProgramReturn"/></form></div>
+@section Scripts{<partial name="_ValidationScriptsPartial"/><script src="~/js/video-upload.js" asp-append-version="true"></script>}

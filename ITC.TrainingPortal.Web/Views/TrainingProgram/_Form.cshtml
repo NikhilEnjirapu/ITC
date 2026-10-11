@@ -1,0 +1,28 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingProgramDto
+<div asp-validation-summary="All" class="text-danger"></div>
+@if (Model is { Id: > 0 })
+{
+    <input type="hidden" asp-for="Id"/>
+    <input type="hidden" asp-for="RowVersion"/>
+}
+<div class="mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control"/><span asp-validation-for="Title" class="text-danger"></span></div>
+<div class="mb-3"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="5"></textarea><span asp-validation-for="Description" class="text-danger"></span></div>
+@if (Model.Id > 0 && (ViewBag.HasSetupContent == true || Model.ExamUnlockVideoId.HasValue)) {
+<div class="mb-3">
+    <label id="exam-unlock" asp-for="ExamUnlockCondition" class="form-label">When can employees take this exam?</label>
+    <select asp-for="ExamUnlockCondition" class="form-select">
+        <option value="0">After all videos are completed</option>
+        <option value="1">After a specific video is completed</option>
+    </select>
+    <span asp-validation-for="ExamUnlockCondition" class="text-danger"></span>
+</div>
+<div class="mb-3" id="unlockVideoField">
+    <label asp-for="ExamUnlockVideoId" class="form-label">Choose a video</label>
+    <select asp-for="ExamUnlockVideoId" asp-items="ViewBag.UnlockVideos" class="form-select"><option value="">Select a video</option></select>
+    <span asp-validation-for="ExamUnlockVideoId" class="text-danger"></span>
+    @if(Model.Id == 0) { <div class="form-text">Save the program and add its videos before configuring a specific unlock video.</div> }
+</div>
+
+} else {
+<p class="text-muted">Save program details, add videos and exam questions, then configure when employees can take the exam.</p><input type="hidden" asp-for="ExamUnlockCondition"/><input type="hidden" asp-for="ExamUnlockVideoId"/>
+}

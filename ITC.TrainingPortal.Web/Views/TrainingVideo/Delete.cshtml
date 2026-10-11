@@ -1,0 +1,2 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingVideoDto
+@{ViewData["Title"]="Delete Training Video";}<h2 class="text-danger">Delete Training Video</h2><div class="glass-panel p-4"><div asp-validation-summary="ModelOnly" class="text-danger"></div><h4>@Model.Title</h4><p>@Model.TrainingProgramTitle · order @Model.SequenceOrder</p><form asp-action="Delete"><input type="hidden" asp-for="Id"/><button class="btn btn-danger">Delete</button> <a asp-action="Index" class="btn btn-outline-light">Cancel</a></form></div>

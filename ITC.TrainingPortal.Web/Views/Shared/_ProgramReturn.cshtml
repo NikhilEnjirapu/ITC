@@ -1,0 +1,9 @@
+@if(ViewData["ReturnProgramId"] is int programId)
+{
+    <input type="hidden" name="returnProgramId" value="@programId" />
+    <a asp-controller="TrainingProgram" asp-action="Details" asp-route-id="@programId" class="btn btn-outline-secondary">Back to Program</a>
+}
+else
+{
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+}

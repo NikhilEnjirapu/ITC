@@ -1,0 +1,46 @@
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Corporate sign in";
+    var enabled = (bool?)ViewData["EntraEnabled"] == true;
+}
+<main class="login-shell">
+    <section class="login-brand">
+        <img class="brand-logo brand-logo-login" src="~/images/itc-logo.png" alt="ITC Limited — Enduring Value" />
+        <h1>Employee Training Portal</h1>
+        <p>Complete assigned training and assessments through ITC's secure corporate learning environment.</p>
+    </section>
+    <section class="login-panel">
+        <div class="login-card">
+            <div class="eyebrow">Corporate access</div>
+            <h2>Welcome</h2>
+            <p class="text-muted mb-4">Use your corporate account to continue to the training portal.</p>
+            @if (ViewData["Message"] is string message)
+            {
+                <div class="alert alert-warning">@message</div>
+            }
+            @if (enabled)
+            {
+                <a asp-action="SignIn" class="btn btn-primary w-100 py-2">Sign in with Corporate Account</a>
+            }
+            else
+            {
+                <button class="btn btn-primary w-100 py-2" disabled>Corporate sign-in is not configured</button>
+                <p class="small text-muted mt-3">The Entra ID foundation is ready and awaiting client configuration.</p>
+            }
+            @if ((bool?)ViewData["DevelopmentLoginEnabled"] == true)
+            {
+                <section class="border border-warning rounded p-3 mt-4" aria-labelledby="development-login-heading">
+                    <h3 id="development-login-heading" class="h5">Development Testing Only</h3>
+                    <p class="small">Local browser test sessions. These options are not corporate SSO and work only on this computer.</p>
+                    <p class="small">Both choices need a matching eligible employee record in your local database. Signing in does not create records.</p>
+                    <form asp-controller="DevelopmentLogin" asp-action="Administrator" method="post" class="mb-2">
+                        <button type="submit" class="btn btn-outline-primary w-100">Sign in as Administrator</button>
+                    </form>
+                    <form asp-controller="DevelopmentLogin" asp-action="Employee" method="post">
+                        <button type="submit" class="btn btn-outline-primary w-100">Sign in as Employee</button>
+                    </form>
+                </section>
+            }
+        </div>
+    </section>
+</main>

@@ -1,0 +1,17 @@
+@inject ITC.TrainingPortal.Application.Interfaces.IQuizService Quizzes
+@inject ITC.TrainingPortal.Application.Interfaces.ITrainingProgramService Programs
+@{ var exams = (await Quizzes.GetAllAsync()).ToDictionary(x => x.TrainingProgramId); }
+<div class="alert alert-info" aria-live="polite">
+    <strong>Review selected training</strong>
+    <p data-program-review-empty>Select a program to review its exam.</p>
+    @foreach(var program in await Programs.GetAllAsync()) {
+        var exam = exams.GetValueOrDefault(program.Id);
+        var description = exam == null ? null : await Quizzes.GetAsync(exam.Id);
+        <div data-program-review="@program.Id" hidden>
+            <p class="mb-0">@program.Title — @(exam?.Title ?? "No exam configured")</p>
+            <p class="mb-0">Exam availability: @(description?.ExamUnlockDescription ?? "Complete program setup first")</p>
+            <a asp-controller="TrainingProgram" asp-action="Details" asp-route-id="@program.Id">Review videos and program setup</a>
+        </div>
+    }
+</div>
+<script src="~/js/assignment-review.js" asp-append-version="true"></script>

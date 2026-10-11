@@ -1,0 +1,13 @@
+@inject ITC.TrainingPortal.Web.Services.ComplianceReportService Reports
+@{ var statuses = (await Reports.GetAsync(new())).ToDictionary(x => x.AssignmentId, x => x.Status); }
+@model ITC.TrainingPortal.Application.DTOs.TrainingAssignmentDto
+@{ ViewData["Title"] = "Assignment details"; }
+<div class="page-header"><div><div class="eyebrow">Training assignment</div><h1>@Model.TrainingProgramTitle</h1><p>Assignment details for @Model.EmployeeName.</p></div><div class="page-actions"><a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit assignment</a><a asp-action="Index" class="btn btn-outline-light">Back</a></div></div>
+<section class="content-card"><dl class="detail-grid">
+    <div class="detail-item"><dt>Employee</dt><dd>@Model.EmployeeName</dd></div>
+    <div class="detail-item"><dt>Department</dt><dd>@(Model.DepartmentName ?? "Not available")</dd></div>
+    <div class="detail-item"><dt>Training program</dt><dd><a asp-controller="TrainingProgram" asp-action="Details" asp-route-id="@Model.TrainingProgramId">@Model.TrainingProgramTitle</a></dd></div>
+    <div class="detail-item"><dt>Status</dt><dd><span class="badge-status status-pending">@statuses.GetValueOrDefault(Model.Id, "Not started")</span></dd></div>
+    <div class="detail-item"><dt>Assigned date</dt><dd>@Model.AssignedAt.ToString("dd MMM yyyy HH:mm")</dd></div>
+    <div class="detail-item"><dt>Due date</dt><dd>@(Model.DueDate?.ToString("dd MMM yyyy HH:mm") ?? "Not set")</dd></div>
+</dl></section>

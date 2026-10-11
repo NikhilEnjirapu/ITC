@@ -1,0 +1,22 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingProgramDto
+@{ ViewData["Title"] = "Delete Training Program"; }
+<h2 class="text-danger">Delete Training Program</h2>
+<div class="glass-panel p-4">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <h4>@Model.Title</h4>
+    <p>@Model.Description</p>
+    <div class="alert alert-danger">
+        <strong>This permanently deletes the training program and its linked records:</strong>
+        <ul>
+            <li>Training videos and employee viewing progress</li>
+            <li>Employee assignments</li>
+            <li>The exam, questions, attempts, and results</li>
+        </ul>
+        <p class="mb-0">This cannot be undone. Employee accounts, other programs, and uploaded video files are kept.</p>
+    </div>
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Permanently delete training program</button>
+        <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
+    </form>
+</div>

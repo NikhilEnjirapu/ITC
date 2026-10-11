@@ -1,0 +1,18 @@
+@inject ITC.TrainingPortal.Web.Services.ComplianceReportService Reports
+@{ var statuses = (await Reports.GetAsync(new())).ToDictionary(x => x.AssignmentId, x => x.Status); }
+@model IEnumerable<ITC.TrainingPortal.Application.DTOs.TrainingAssignmentDto>
+@{ ViewData["Title"] = "Training Assignments"; }
+<div class="page-header"><div><div class="eyebrow">Distribution</div><h1>Training assignments</h1><p>Associate employees with any available training program.</p></div><a asp-action="Create" class="btn btn-primary">Assign training</a></div>
+<section class="content-card directory-card"><div class="list-toolbar"><div class="search-control"><input class="form-control" type="search" placeholder="Search assignments" data-table-search="#assignmentTable" aria-label="Search assignments"/></div></div>
+@if (Model.Any())
+{
+    <div class="table-responsive"><table id="assignmentTable" class="table table-hover"><thead><tr><th>Employee</th><th>Department</th><th>Program</th><th>Assigned</th><th>Due</th><th>Status</th><th class="text-end">Actions</th></tr></thead><tbody>
+    @foreach (var assignment in Model)
+    {
+        <tr data-search-row><td><strong>@assignment.EmployeeName</strong></td><td>@(assignment.DepartmentName ?? "—")</td><td>@assignment.TrainingProgramTitle</td><td>@assignment.AssignedAt.ToString("dd MMM yyyy")</td><td>@(assignment.DueDate?.ToString("dd MMM yyyy") ?? "Not set")</td><td><span class="badge-status status-pending">@statuses.GetValueOrDefault(assignment.Id, "Not started")</span></td><td class="text-end actions-cell"><a asp-action="Details" asp-route-id="@assignment.Id" class="btn btn-sm btn-outline-primary">View</a> <a asp-action="Edit" asp-route-id="@assignment.Id" class="btn btn-sm btn-outline-light">Edit</a> <a asp-action="Delete" asp-route-id="@assignment.Id" class="btn btn-sm btn-outline-danger">Delete</a></td></tr>
+    }
+    </tbody></table></div>
+}
+else
+{<div class="empty-state"><div class="empty-state-icon">✓</div><h3>No training assignments</h3><p>Assign a program to an employee when both records are ready.</p><a asp-action="Create" class="btn btn-primary">Assign training</a></div>}
+</section>

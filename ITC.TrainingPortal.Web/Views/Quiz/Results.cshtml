@@ -1,0 +1,5 @@
+@model IReadOnlyList<ITC.TrainingPortal.Application.DTOs.QuizResultDto>
+@{ ViewData["Title"]="Results"; }
+<div class="page-header"><div><div class="eyebrow">My learning</div><h1>Exam results</h1><p>Saved scores and outcomes from completed exams.</p></div></div>
+@if(Model.Count==0){<section class="content-card p-4"><p>No completed exams yet.</p><a asp-action="Mine" class="btn btn-primary">View exams</a></section>}
+@foreach(var result in Model){<section class="content-card p-4 mb-3"><div class="eyebrow">@result.TrainingProgramTitle</div><h2 class="h4">@result.QuizTitle</h2><p>@result.ScorePercentage% — @(result.IsPassed?"Passed":"Failed")</p><p>Completed @((result.CompletedAt ?? result.AttemptDate).ToString("dd MMM yyyy HH:mm")) (UTC)</p><a asp-action="Result" asp-route-id="@result.Id" class="btn btn-primary">View result</a></section>}

@@ -1,0 +1,16 @@
+@model ITC.TrainingPortal.Web.Models.DashboardViewModel
+@inject ITC.TrainingPortal.Web.Services.AdminWorkflowService Workflow
+@if (Model.IsDataAvailable) {
+    var programs = await Workflow.ProgramsAsync();
+    <div class="page-actions">
+    @if (programs.Count == 0) {
+        <a asp-controller="TrainingProgram" asp-action="Create" class="btn btn-primary">Create your first program</a>
+    } else if (!programs.Any(x => x.IsReady)) {
+        <a asp-controller="TrainingProgram" asp-action="Index" class="btn btn-primary">Continue program setup</a>
+        <a asp-controller="TrainingProgram" asp-action="Create" class="btn btn-outline-primary">Create program</a>
+    } else {
+        <a asp-controller="TrainingAssignment" asp-action="Create" class="btn btn-primary">Assign training</a>
+        <a asp-controller="TrainingProgram" asp-action="Index" class="btn btn-outline-primary">Manage programs</a>
+    }
+    </div>
+}

@@ -1,0 +1,42 @@
+@model ITC.TrainingPortal.Web.Models.TrainingProgramDetailsViewModel
+@{ ViewData["Title"] = "Training program details"; }
+
+
+<div class="page-header">
+    <div><div class="eyebrow">Training program</div><h1>@Model.Program.Title</h1><p>@(Model.Program.Description ?? "No description provided")</p></div>
+    <div class="page-actions"><a asp-action="Edit" asp-route-id="@Model.Program.Id" class="btn btn-outline-primary">Edit program</a><a asp-action="Index" class="btn btn-outline-light">Back</a></div>
+</div>
+<partial name="_ProgramSetup" model="Model"/>
+<div class="metric-grid">
+    <div class="metric-card"><span>Exam Unlock</span><strong class="h5">@(Model.Program.ExamUnlockCondition == ITC.TrainingPortal.Domain.Entities.ExamUnlockCondition.SpecificVideo ? $"After \"{Model.Videos.FirstOrDefault(x => x.Id == Model.Program.ExamUnlockVideoId)?.Title}\"" : "After all videos")</strong></div>
+    <div class="metric-card"><span>Videos</span><strong>@Model.Videos.Count</strong><small>Ordered training content</small></div>
+    <div class="metric-card"><span>Assignments</span><strong>@Model.Assignments.Count</strong><small>Assigned employees</small></div>
+    <div class="metric-card"><span>Related exam</span><strong>@if(Model.Exam is not null){<a asp-controller="Quiz" asp-action="Details" asp-route-id="@Model.Exam.Id">@Model.Exam.Title</a>}else{<span>None</span>}</strong><small>@(Model.Program.RelatedQuizTitle is null ? "No exam configured" : "Program-related exam")</small></div>
+
+</div>
+<div class="section-grid">
+    <section class="content-card">
+        <div class="content-card-header"><strong>Program videos</strong></div>
+        @if (Model.Videos.Any())
+        {
+            <div class="table-responsive"><table class="table"><thead><tr><th>Order</th><th>Title</th><th>Actions</th></tr></thead><tbody>
+            @foreach (var video in Model.Videos)
+            {<tr><td><span class="badge-status status-progress">@video.SequenceOrder</span></td><td>@video.Title</td><td><a asp-controller="TrainingVideo" asp-action="Details" asp-route-id="@video.Id" class="btn btn-sm btn-outline-primary">View</a> <a asp-controller="TrainingVideo" asp-action="Edit" asp-route-id="@video.Id" asp-route-fromProgram="true" class="btn btn-sm btn-outline-primary">Edit</a> <form asp-controller="TrainingVideo" asp-action="Reorder" method="post" class="d-inline"><input type="hidden" name="id" value="@video.Id"/><button name="direction" value="up" class="btn btn-sm btn-outline-secondary" aria-label="Move @video.Title up">Move up</button> <button name="direction" value="down" class="btn btn-sm btn-outline-secondary" aria-label="Move @video.Title down">Move down</button></form></td></tr>}
+            </tbody></table></div>
+        }
+        else
+        {<div class="empty-state"><div class="empty-state-icon">▶</div><h3>No videos in this program</h3><p>Add videos in the order employees should watch them.</p></div>}
+    </section>
+    <section class="content-card">
+        <div class="content-card-header"><strong>Employee assignments</strong></div>
+        @if (Model.Assignments.Any())
+        {
+            <div class="table-responsive"><table class="table"><thead><tr><th>Employee</th><th>Department</th><th>Assigned</th></tr></thead><tbody>
+            @foreach (var assignment in Model.Assignments)
+            {<tr><td><a asp-controller="TrainingAssignment" asp-action="Details" asp-route-id="@assignment.Id">@assignment.EmployeeName</a></td><td>@(assignment.DepartmentName ?? "—")</td><td>@assignment.AssignedAt.ToString("dd MMM yyyy")</td></tr>}
+            </tbody></table></div>
+        }
+        else
+        {<div class="empty-state"><h3>No assignments</h3><p>This program has not been assigned yet.</p></div>}
+    </section>
+</div>

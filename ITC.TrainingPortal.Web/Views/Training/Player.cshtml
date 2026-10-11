@@ -1,0 +1,20 @@
+@model ITC.TrainingPortal.Application.DTOs.VideoPlaybackDto
+@{
+    ViewData["Title"] = Model.VideoTitle;
+    var progressPercentage = Model.IsCompleted ? 100 : Model.DurationSeconds <= 0 ? 0 : Math.Min(100, (int)Math.Round(Model.CurrentPositionSeconds * 100d / Model.DurationSeconds));
+}
+<div class="page-header player-page-header"><div><div class="eyebrow">@Model.TrainingProgramTitle</div><h1>@Model.VideoTitle</h1><p>Video @Model.VideoNumber of @Model.VideoCount</p></div><a asp-action="Content" asp-route-id="@Model.TrainingProgramId" class="btn btn-outline-light">Program contents</a></div>
+<section class="content-card player-card"><div class="video-stage player-stage p-0"><video id="trainingPlayer" controls controlsList="nodownload noplaybackrate" disablePictureInPicture preload="metadata" class="training-video" data-resume="@Model.CurrentPositionSeconds" data-video-id="@Model.VideoId" data-heartbeat="@Url.Action("Heartbeat", "Training")" data-status="@Url.Action("Status", "Media")"><source src="@Url.Action("Video", "Media", new { id = Model.VideoId })"/>Your browser cannot play this video.</video></div>
+<div class="content-card-body player-summary"><div class="player-progress">
+<div class="fw-semibold mb-2">Video Progress</div>
+<div class="progress mb-2"><div id="videoProgress" class="progress-bar" role="progressbar" aria-label="Video Progress" aria-valuenow="@progressPercentage" aria-valuemin="0" aria-valuemax="100" style="width:@progressPercentage%"></div></div>
+<div class="player-progress-copy"><span id="videoStatus" class="@(Model.IsCompleted ? "text-success fw-semibold" : "")" role="status" aria-live="polite">@(Model.IsCompleted ? "✓ Completed" : "In progress")</span><strong id="videoPercentage">@progressPercentage%</strong></div>
+</div><div id="playbackError" class="alert alert-warning mt-3 d-none"></div><div class="player-navigation">@if(Model.PreviousVideoId.HasValue){<a asp-action="Player" asp-route-id="@Model.PreviousVideoId" class="btn btn-outline-primary">Previous</a>}else{<span></span>}@if(Model.NextVideoId.HasValue && Model.IsNextUnlocked){<a id="nextVideo" asp-action="Player" asp-route-id="@Model.NextVideoId" class="btn btn-primary">Next</a>}else if(Model.NextVideoId.HasValue){<button id="nextVideo" class="btn btn-secondary" disabled>Next — locked</button>}</div></div></section>
+<form id="heartbeatToken">@Html.AntiForgeryToken()</form>
+@if(ViewData["ExamAccess"] is ITC.TrainingPortal.Application.DTOs.ExamAccessDto exam) { <partial name="_ExamAvailability" model="exam"/> }
+@section Scripts{
+<script src="~/js/exam-availability.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/employee-fullscreen.css" asp-append-version="true" />
+<script src="~/js/employee-fullscreen.js" asp-append-version="true"></script>
+<script src="~/js/training-player.js" asp-append-version="true"></script>
+}

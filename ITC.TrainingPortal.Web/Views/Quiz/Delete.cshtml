@@ -1,0 +1,2 @@
+@model ITC.TrainingPortal.Application.DTOs.QuizDto
+@{ViewData["Title"]="Delete exam";}<div class="page-header"><div><h1>Delete exam</h1></div></div><section class="content-card admin-form-card"><div asp-validation-summary="ModelOnly" class="text-danger"></div><p>Delete <strong>@Model?.Title</strong>? Exams with attempts cannot be deleted.</p><form method="post"><button class="btn btn-danger">Delete</button> <a asp-action="Details" asp-route-id="@Model?.Id" class="btn btn-outline-secondary">Cancel</a></form></section>

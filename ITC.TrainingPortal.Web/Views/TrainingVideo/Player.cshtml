@@ -1,0 +1,2 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingVideoDto
+@{ViewData["Title"]="Video preview";}<h1>@Model.Title</h1><section class="content-card p-4"><video controls preload="metadata" style="width:100%;max-height:70vh"><source src="@Url.Action("Preview","Media",new{id=Model.Id})"/></video><p>Administrator preview. Employee completion is recorded through assigned training.</p><a asp-action="Details" asp-route-id="@Model.Id">Back to video</a></section>

@@ -1,0 +1,13 @@
+@model ITC.TrainingPortal.Web.Controllers.EligibilityRuleForm
+@inject ITC.TrainingPortal.Infrastructure.Data.ApplicationDbContext Database
+@using Microsoft.EntityFrameworkCore
+@{ViewData["Title"] = "Edit exclusion";}
+<h1>@(Model.Id == 0 ? "Add" : "Edit") exclusion</h1>
+@if(ViewBag.Affected is List<string> affected) { <section class="alert alert-warning"><strong>Preview: @affected.Count additional employees would lose access.</strong><p>This includes administrators. Review the list before saving.</p><ul>@foreach(var name in affected){<li>@name</li>}</ul></section> }<form asp-action="Save" method="post" class="content-card p-4"><div asp-validation-summary="All" class="text-danger"></div><input asp-for="Id" type="hidden"/>
+<label asp-for="RuleType" class="form-label">Rule type</label><select asp-for="RuleType" class="form-select mb-3">@foreach(var type in ITC.TrainingPortal.Application.Services.EligibilityEvaluator.RuleTypes){<option>@type</option>}</select>
+<div data-rule-editor="text"><label for="ruleText" class="form-label">Employee ID, prefix, or email domain</label><input id="ruleText" name="RuleValue" value="@Model.RuleValue" class="form-control mb-3"/></div>
+<div data-rule-editor="DepartmentId" hidden><label for="ruleDepartment" class="form-label">Department</label><select id="ruleDepartment" name="RuleValue" class="form-select mb-3" disabled><option value="">Select department</option>@foreach(var department in await Database.Departments.AsNoTracking().OrderBy(x=>x.Name).ToListAsync()){<option value="@department.Id" selected="@(Model.RuleValue == department.Id.ToString())">@department.Name</option>}</select></div>
+<div data-rule-editor="WorkerType" hidden><label for="ruleWorker" class="form-label">Worker category</label><select id="ruleWorker" name="RuleValue" class="form-select mb-3" disabled>@foreach(var type in ITC.TrainingPortal.Application.Services.EligibilityEvaluator.WorkerTypes){<option value="@type" selected="@(Model.RuleValue == type)">@type</option>}</select></div>
+<p>Preview the impact before saving. Active exclusions apply immediately, including to administrator accounts.</p>
+<label class="mb-3"><input asp-for="IsActive"/> Active</label><div><button name="preview" value="true" class="btn btn-outline-primary">Preview impact</button> <button class="btn btn-primary">Save rule</button> <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a></div></form>
+@section Scripts { <script src="~/js/eligibility-editor.js" asp-append-version="true"></script> }
