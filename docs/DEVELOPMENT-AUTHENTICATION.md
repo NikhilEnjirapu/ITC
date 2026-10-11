@@ -2,9 +2,17 @@
 
 This mechanism tests the existing Admin and Employee UI before corporate SSO is configured. It issues a real cookie through the existing `Cookies` scheme and uses the existing role policies, employee resolver and eligibility middleware. It does not create database records or grant anonymous access.
 
+## Local setup (first time)
+
+1. Install SQL Server Express (instance `localhost\SQLEXPRESS`) or change `ConnectionStrings:DefaultConnection` in `ITC.TrainingPortal.Web/appsettings.json`.
+2. Create an empty `EmployeeTrainingPortal` database and run `deployment/Database.sql` against it.
+3. Run `deployment/DevelopmentLoginAccounts.sql` against the same database. Skipping this step makes both sign-in buttons end on **Access denied**.
+
+The portal then opens with no programs, videos or exams; create them from the Administrator pages.
+
 ## Run and sign in
 
-Restart the currently running application to load the new controller, view and Development settings. From the solution directory:
+From the solution directory:
 
 ```powershell
 dotnet run --project .\ITC.TrainingPortal.Web --launch-profile http
@@ -57,7 +65,7 @@ If local configuration instead selects the existing `UserId` matching mode and s
 
 **A matching eligible employee database record is required for BOTH choices.** The current resolver queries `Employees`; the existing middleware also checks administrators. Without a matching record, sign-in can issue the cookie, but the redirected protected request is denied and the cookie is cleared by the existing middleware. The login buttons do not provision accounts or departments.
 
-For local UI testing, the database owner must separately supply appropriate local records with the matching email (or user ID), an existing department, a verified eligible worker category (`Employee`) and an employee ID allowed by the existing eligibility rules. No record-provisioning action, seeding script, schema change or eligibility exemption is included in this implementation. The database was empty at the preceding audit; these records have not been automatically added.
+For local UI testing, run `deployment/DevelopmentLoginAccounts.sql` once against the local database, after `deployment/Database.sql`. It creates a "Development Testing" department and both records above (employee IDs 900001 and 900002, worker category `Employee`, matching email and user ID). It is safe to re-run and refuses to run before the schema exists. Sign-in itself never creates records, and the application has no eligibility exemption for these accounts. Never run this script against a client or production database.
 
 Matching records permit the relevant UI to load. Employee training, exam and result lists can still be empty until actual local assignments/content/results exist. Missing data is not fabricated by authentication.
 
