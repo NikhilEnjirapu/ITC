@@ -167,6 +167,132 @@ public sealed class QuizWorkflowTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => f.Service.AddQuestionAsync(new() { QuizId = 10, SequenceOrder = 2, QuestionText = "Q" }));
     }
 
+    [Theory]
+    [InlineData("ISOLATE the power supply.", 100)]
+    [InlineData("Isolate the equipment.", 50)]
+    public async Task Keyword_Answers_Are_Scored_Immediately(string answer, int score)
+    {
+        var f = Fixture();
+        await f.Service.AddQuestionAsync(new() { QuizId = 10, SequenceOrder = 2, QuestionText = "Explain", IsTypedAnswer = true, AnswerKeywords = "isolate;power supply" });
+        var attempt = await f.Service.StartOrResumeAsync(1, 10);
+        var result = await f.Service.SubmitAsync(1, new() { AttemptId = attempt.AttemptId,
+            Answers = attempt.Questions.ToDictionary(x => x.Id, x => x.IsTypedAnswer ? answer : "A") });
+        Assert.False(result.RequiresReview);
+        Assert.Equal(score, result.ScorePercentage);
+        Assert.Equal(score == 100, result.IsPassed);
+        Assert.DoesNotContain("AnswerKeywords", System.Text.Json.JsonSerializer.Serialize(attempt.Questions));
+    }
+
+    [Fact]
+    public async Task Invalid_Batch_Does_Not_Insert_Any_Questions()
+    {
+        var f = Fixture();
+        var valid = Question(10, 2);
+        var invalid = Question(10, 3); invalid.CorrectOption = "Z";
+        await Assert.ThrowsAsync<InvalidOperationException>(() => f.Service.ImportQuestionsAsync(10, [valid, invalid]));
+        Assert.Single(await f.Questions.GetAllAsync());
+    }
+
+    [Fact]
+    public async Task Import_Rejects_Existing_Order_And_Exams_With_Attempts()
+    {
+        var f = Fixture();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => f.Service.ImportQuestionsAsync(10, [Question(10, 1)]));
+        var started = Fixture(activeAttempt: true);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => started.Service.ImportQuestionsAsync(10, [Question(10, 2)]));
+    }
+
+    [Fact]
+    public async Task Valid_Batch_Appends_Questions()
+    {
+        var f = Fixture();
+        await f.Service.ImportQuestionsAsync(10, [Question(10, 2), Question(10, 3)]);
+        Assert.Equal(3, (await f.Service.GetQuestionsAsync(10)).Count);
+    }
+
+    [Fact]
+    public async Task Active_Attempt_Remains_Visible_And_Resumable_After_Assignment_Removal_And_Deactivation()
+    {
+        var f = Fixture();
+        await f.Service.StartOrResumeAsync(1, 10);
+        foreach (var assignment in await f.Assignments.GetAllAsync()) f.Assignments.Remove(assignment);
+        (await f.Quizzes.GetByIdAsync(10))!.IsActive = false;
+        (await f.Progress.GetAllAsync()).Single().IsCompleted = false;
+        Assert.Single(await f.Service.GetEmployeeExamsAsync(1));
+        var resumed = await f.Service.StartOrResumeAsync(1, 10);
+        Assert.Single(resumed.Questions);
+        var result = await f.Service.SubmitAsync(1, new() { AttemptId = resumed.AttemptId, Answers = new Dictionary<int, string> { [20] = "A" } });
+        Assert.True(result.IsCompleted);
+        Assert.False(await f.Service.HasActiveAttemptAsync(1));
+        Assert.Null(await f.Service.GetAccessAsync(1, 10));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => f.Service.StartOrResumeAsync(1, 10));
+    }
+
+    [Fact]
+    public async Task Submission_And_Resume_Cannot_Create_A_Fourth_Attempt()
+    {
+        var f = Fixture(activeAttempt: true);
+        await f.Results.AddAsync(new() { Id = 1, EmployeeId = 1, QuizId = 10, IsCompleted = true });
+        await f.Results.AddAsync(new() { Id = 2, EmployeeId = 1, QuizId = 10, IsCompleted = true });
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Results.BeforeSaveAsync = async () => { entered.SetResult(); await release.Task; };
+        var submission = f.Service.SubmitAsync(1, new() { AttemptId = 50, Answers = new Dictionary<int, string> { [20] = "A" } });
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var resume = f.Service.StartOrResumeAsync(1, 10);
+        Assert.False(resume.IsCompleted);
+        release.SetResult();
+        await submission;
+        await Assert.ThrowsAsync<InvalidOperationException>(() => resume);
+        Assert.Equal(3, (await f.Results.GetAllAsync()).Count());
+        Assert.False(await f.Service.HasActiveAttemptAsync(1));
+    }
+
+    [Fact]
+    public async Task Starting_Exam_Blocks_Overlapping_Question_Addition()
+    {
+        var f = Fixture();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Results.BeforeAddAsync = async () => { entered.SetResult(); await release.Task; };
+        var start = f.Service.StartOrResumeAsync(1, 10);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var edit = f.Service.AddQuestionAsync(Question(10, 2));
+        Assert.False(edit.IsCompleted);
+        release.SetResult();
+        Assert.Single((await start).Questions);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => edit);
+        Assert.Single((await f.Service.StartOrResumeAsync(1, 10)).Questions);
+    }
+
+    [Fact]
+    public async Task Question_Addition_Completes_Before_Overlapping_Exam_Start()
+    {
+        var f = Fixture();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Questions.BeforeAddAsync = async () => { entered.SetResult(); await release.Task; };
+        var edit = f.Service.AddQuestionAsync(Question(10, 2));
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var start = f.Service.StartOrResumeAsync(1, 10);
+        Assert.False(start.IsCompleted);
+        release.SetResult();
+        await edit;
+        Assert.Equal(2, (await start).Questions.Count);
+        Assert.Equal(2, (await f.Service.StartOrResumeAsync(1, 10)).Questions.Count);
+    }
+
+    [Fact]
+    public async Task Result_History_Does_Not_Require_Assignment_And_Only_Returns_Own_Completed_Attempts()
+    {
+        var f = Fixture(completedResult: true);
+        foreach (var assignment in await f.Assignments.GetAllAsync()) f.Assignments.Remove(assignment);
+        await f.Results.AddAsync(new() { Id = 51, EmployeeId = 2, QuizId = 10, IsCompleted = true });
+        await f.Results.AddAsync(new() { Id = 52, EmployeeId = 1, QuizId = 10 });
+        var result = Assert.Single(await f.Service.GetEmployeeResultsAsync(1));
+        Assert.Equal(50, result.Id);
+    }
+
     private static QuizQuestionDto Question(int quizId,int order)=>new(){QuizId=quizId,SequenceOrder=order,QuestionText="Q",OptionA="A",OptionB="B",OptionC="C",OptionD="D",CorrectOption="A"};
 
     private static TestFixture Fixture(bool completed=true,bool activeAttempt=false,bool completedResult=false)
@@ -179,7 +305,7 @@ public sealed class QuizWorkflowTests
         var assignments=new FakeRepository<TrainingAssignment>(new TrainingAssignment{EmployeeId=1,TrainingProgramId=10});
         var videos=new FakeRepository<TrainingVideo>(new TrainingVideo{Id=100,TrainingProgramId=10,SequenceOrder=1,Title="Video",VideoUrl="https://example.com/v.mp4",DurationSeconds=100});
         var progress=new FakeRepository<VideoProgress>(new VideoProgress{EmployeeId=1,TrainingVideoId=100,IsCompleted=completed});
-        return new(new QuizService(quizzes,questions,results,programs,assignments,videos,progress),quizzes,questions,results,programs,assignments,videos,progress);
+        return new(new QuizService(quizzes,questions,results,programs,assignments,videos,progress,new TestAssessmentTransaction()),quizzes,questions,results,programs,assignments,videos,progress);
     }
 
     private sealed record TestFixture(QuizService Service,FakeRepository<Quiz> Quizzes,FakeRepository<QuizQuestion> Questions,FakeRepository<QuizResult> Results,

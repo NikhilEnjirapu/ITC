@@ -20,7 +20,8 @@
     <fieldset class="border rounded p-3 mb-3"><legend class="h5">@(item.index + 1). @q.QuestionText</legend>
     <p style="white-space: pre-wrap">@answers.GetValueOrDefault(q.Id)</p>
     @if(q.IsTypedAnswer){
-        @if(Model.RequiresReview){<label for="mark@q.Id" class="form-label">Mark this answer</label><select id="mark@q.Id" name="marks[@q.Id]" class="form-select" required><option value="">Select a mark</option><option value="true">Correct (1 point)</option><option value="false">Incorrect (0 points)</option></select>}
+        @if(!string.IsNullOrWhiteSpace(q.AnswerKeywords)){<p>Keyword marking: @(marks.GetValueOrDefault(q.Id) ? "Correct (1 point)" : "Incorrect (0 points)")</p><p>Required keywords: @q.AnswerKeywords</p>}
+        else if(Model.RequiresReview){<label for="mark@q.Id" class="form-label">Mark this answer</label><select id="mark@q.Id" name="marks[@q.Id]" class="form-select" required><option value="">Select a mark</option><option value="true">Correct (1 point)</option><option value="false">Incorrect (0 points)</option></select>}
         else{<p>@(marks.GetValueOrDefault(q.Id) ? "Correct" : "Incorrect")</p>}
     }else{<p>Correct option: @q.CorrectOption (automatically marked)</p>}
     </fieldset>

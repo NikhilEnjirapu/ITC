@@ -59,6 +59,10 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         {
             await _context.SaveChangesAsync();
         }
+        catch (DbUpdateException ex) when (typeof(T) == typeof(QuizResult) && ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+        {
+            throw new ConcurrencyConflictException("Another request saved this record. Reload and try again.", ex);
+        }
         catch (DbUpdateConcurrencyException ex)
         {
             throw new ConcurrencyConflictException(

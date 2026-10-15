@@ -16,38 +16,39 @@ public sealed class ReportFilter
 
 public sealed class ComplianceReportService(ApplicationDbContext db)
 {
-    public async Task<IReadOnlyList<ComplianceRow>> GetAsync(ReportFilter filter)
+    public async Task<IReadOnlyList<ComplianceRow>> GetAsync(ReportFilter filter, int skip = 0, int? take = null)
     {
-        var query = db.TrainingAssignments.AsNoTracking().AsQueryable();
-        if (filter.EmployeeId.HasValue) query = query.Where(x => x.EmployeeId == filter.EmployeeId);
-        if (filter.DepartmentId.HasValue) query = query.Where(x => x.Employee.DepartmentId == filter.DepartmentId);
-        if (filter.TrainingProgramId.HasValue) query = query.Where(x => x.TrainingProgramId == filter.TrainingProgramId);
-        var assignments = await query.Include(x => x.Employee).ThenInclude(x => x.Department).Include(x => x.TrainingProgram).ToListAsync();
-        var employeeIds = assignments.Select(x => x.EmployeeId).Distinct().ToList();
-        var programIds = assignments.Select(x => x.TrainingProgramId).Distinct().ToList();
-        var videos = await db.TrainingVideos.AsNoTracking().Where(x => programIds.Contains(x.TrainingProgramId)).ToListAsync();
-        var progress = await db.VideoProgresses.AsNoTracking().Where(x => employeeIds.Contains(x.EmployeeId)).ToListAsync();
-        var quizzes = await db.Quizzes.AsNoTracking().Where(x => programIds.Contains(x.TrainingProgramId)).ToListAsync();
-        var results = await db.QuizResults.AsNoTracking().Where(x => employeeIds.Contains(x.EmployeeId)).ToListAsync();
-        var rows = assignments.Select(a =>
+        var assignments = db.TrainingAssignments.AsNoTracking().AsQueryable();
+        if (filter.EmployeeId.HasValue) assignments = assignments.Where(x => x.EmployeeId == filter.EmployeeId);
+        if (filter.DepartmentId.HasValue) assignments = assignments.Where(x => x.Employee.DepartmentId == filter.DepartmentId);
+        if (filter.TrainingProgramId.HasValue) assignments = assignments.Where(x => x.TrainingProgramId == filter.TrainingProgramId);
+        var summaries = assignments.Select(a => new
         {
-            var programVideos = videos.Where(x => x.TrainingProgramId == a.TrainingProgramId).Select(x => x.Id).ToHashSet();
-            var completed = progress.Count(x => x.EmployeeId == a.EmployeeId && x.IsCompleted && programVideos.Contains(x.TrainingVideoId));
-            var quiz = quizzes.SingleOrDefault(x => x.TrainingProgramId == a.TrainingProgramId);
-            var attempts = results.Where(x => x.EmployeeId == a.EmployeeId && x.QuizId == quiz?.Id).OrderByDescending(x => x.AttemptDate).ToList();
-            var active = attempts.Any(x => !x.IsCompleted);
-            var passed = attempts.Any(x => x.IsCompleted && !x.RequiresReview && x.IsPassed);
-            var completedAttempts = attempts.Where(x => x.IsCompleted).ToList();
-            var best = completedAttempts.Where(x => !x.RequiresReview).OrderByDescending(x => x.ScorePercentage).FirstOrDefault();
-            var awaitingReview = completedAttempts.Any(x => x.RequiresReview);
-            var exam = active ? "In progress" : passed ? "Passed" : awaitingReview ? "Awaiting review" : best != null ? "Failed" : quiz == null ? "Not configured" : "Not attempted";
-            var complete = programVideos.Count > 0 && completed == programVideos.Count && passed && !active;
-            var started = progress.Any(x => x.EmployeeId == a.EmployeeId && programVideos.Contains(x.TrainingVideoId) && x.CurrentPositionSeconds > 0) || attempts.Count > 0;
-            var status = complete ? "Completed" : a.DueDate < DateTime.UtcNow ? "Overdue" : started ? "In progress" : "Not started";
-            return new ComplianceRow(a.Employee.EmployeeId, $"{a.Employee.FirstName} {a.Employee.LastName}", a.Employee.Department.Name,
-                a.TrainingProgram.Title, completed, programVideos.Count, exam, best?.ScorePercentage, status, a.DueDate, a.Id, a.EmployeeId, a.TrainingProgramId);
+            a.Id, a.EmployeeId, a.TrainingProgramId, a.DueDate,
+            Code = a.Employee.EmployeeId, Name = a.Employee.FirstName + " " + a.Employee.LastName,
+            Department = a.Employee.Department.Name, Program = a.TrainingProgram.Title,
+            Total = a.TrainingProgram.Videos.Count(),
+            Completed = a.TrainingProgram.Videos.Count(v => db.VideoProgresses.Any(p => p.EmployeeId == a.EmployeeId && p.TrainingVideoId == v.Id && p.IsCompleted)),
+            HasQuiz = a.TrainingProgram.Quiz != null,
+            Active = db.QuizResults.Any(r => r.EmployeeId == a.EmployeeId && r.Quiz.TrainingProgramId == a.TrainingProgramId && !r.IsCompleted),
+            Passed = db.QuizResults.Any(r => r.EmployeeId == a.EmployeeId && r.Quiz.TrainingProgramId == a.TrainingProgramId && r.IsCompleted && !r.RequiresReview && r.IsPassed),
+            Review = db.QuizResults.Any(r => r.EmployeeId == a.EmployeeId && r.Quiz.TrainingProgramId == a.TrainingProgramId && r.IsCompleted && r.RequiresReview),
+            Best = db.QuizResults.Where(r => r.EmployeeId == a.EmployeeId && r.Quiz.TrainingProgramId == a.TrainingProgramId && r.IsCompleted && !r.RequiresReview).Select(r => (int?)r.ScorePercentage).Max(),
+            Started = db.VideoProgresses.Any(p => p.EmployeeId == a.EmployeeId && p.TrainingVideo.TrainingProgramId == a.TrainingProgramId && p.CurrentPositionSeconds > 0) ||
+                db.QuizResults.Any(r => r.EmployeeId == a.EmployeeId && r.Quiz.TrainingProgramId == a.TrainingProgramId)
         });
-        if (!string.IsNullOrWhiteSpace(filter.Status)) rows = rows.Where(x => x.Status == filter.Status);
-        return rows.OrderBy(x => x.EmployeeId).ThenBy(x => x.Program).ToList();
+        var now = DateTime.UtcNow;
+        var statuses = summaries.Select(x => new
+        {
+            Summary = x,
+            Exam = x.Passed ? "Passed" : x.Active ? "In progress" : x.Review ? "Awaiting review" : x.Best != null ? "Failed" : !x.HasQuiz ? "Not configured" : "Not attempted",
+            Status = x.Total > 0 && x.Completed == x.Total && x.Passed ? "Completed" : x.DueDate < now ? "Overdue" : x.Started ? "In progress" : "Not started"
+        });
+        if (!string.IsNullOrWhiteSpace(filter.Status)) statuses = statuses.Where(x => x.Status == filter.Status);
+        var page = statuses.OrderBy(x => x.Summary.Code).ThenBy(x => x.Summary.Program).ThenBy(x => x.Summary.Id).Skip(Math.Max(0, skip)).AsQueryable();
+        if (take.HasValue) page = page.Take(take.Value);
+        return await page.Select(x => new ComplianceRow(x.Summary.Code, x.Summary.Name, x.Summary.Department,
+            x.Summary.Program, x.Summary.Completed, x.Summary.Total, x.Exam, x.Summary.Best, x.Status,
+            x.Summary.DueDate, x.Summary.Id, x.Summary.EmployeeId, x.Summary.TrainingProgramId)).ToListAsync();
     }
 }

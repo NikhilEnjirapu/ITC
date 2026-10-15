@@ -1,3 +1,12 @@
+# Best of three attempts ? client requirement ? 2026-10-15
+
+- Employees may complete an exam up to three times, including after passing; using all three attempts is optional.
+- The highest graded score determines the reported exam outcome. A later lower score does not remove an earlier pass.
+- Answers awaiting manual review count toward the three-attempt limit but do not enter the best-score calculation until graded.
+- All attempt results remain available. The results page separates the best score from individual attempt history.
+- A fourth attempt is blocked by the server. Existing video prerequisites and exam activation rules still apply.
+- No database migration is needed for this policy clarification.
+
 # Question shuffling - 2026-10-14
 
 - Each new exam attempt receives an independently shuffled question sequence.
@@ -48,7 +57,24 @@ Start with INSTALLATION.md. Configure production SSO, SQL connectivity, private 
 - Adding videos to used programs can change completion status. Program deletion removes operational learning history; assignment removal hides retained results from current-assignment listings.
 - Media replacement/deletion does not clean up old stored files.
 - Video count is unrestricted and selected-video exam unlock is supported. These differ from the supplied PID and require agreement.
-- Completed exams, including failures, cannot be retaken; agree the remediation process.
+- Superseded by the client-confirmed best-of-three policy below: completed exams can be retaken while attempts remain and the exam is active.
 - Corporate SSO, target IIS, fresh SQL installation, concurrency, browser media/download behavior, load and backup/restore acceptance remain pending.
 
 This rebuild does not resolve the above application issues or constitute production acceptance. Client video files, database backups and live tenant credentials are not included.
+
+
+## Project review fixes ? 2026-10-15
+
+- Existing exam attempts remain visible and resumable after assignment removal, exam deactivation or unlock-rule changes. Starting a new attempt still requires an active assignment and current eligibility/unlock checks.
+- Concurrent exam saves return recovery messages instead of unhandled errors. Question order is saved with the new attempt in one save.
+- Previously earned completion and passing status remain intact during optional retakes.
+- Dashboard readiness uses SQL existence checks. Compliance reports calculate summary values in SQL, filter before paging, and show 100 rows per page; CSV exports include all matching rows.
+- Pin the transitive PKCS dependency and test XML dependency to 10.0.13. Deployed servers must run the .NET 10.0.13 Hosting Bundle or later.
+
+
+## Follow-up assessment fixes ? 2026-10-15
+
+- Assessment writes use serializable SQL transactions and transaction-owned application locks. Start/resume and submission coordinate per employee; start and question edits/imports/deletes coordinate per exam. Quiz settings changes use the same exam lock.
+- New attempts recheck access, availability, unlock state and the three-attempt limit immediately before creation. Resuming an already-started attempt remains supported after assignment removal.
+- Employee results history reads the employee's completed attempts independently of current assignments. This does not grant access to new attempts on unassigned programs.
+- No schema migration is required. Deploy/restart all application instances together so every writer participates in the new transaction protocol.

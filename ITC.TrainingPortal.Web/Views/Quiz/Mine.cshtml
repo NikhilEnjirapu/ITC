@@ -1,6 +1,6 @@
 @model IReadOnlyList<ITC.TrainingPortal.Application.DTOs.ExamAccessDto>
 @{ ViewData["Title"] = "Exams"; }
-<div class="page-header"><div><div class="eyebrow">Assessments</div><h1>My exams</h1></div></div>
+<div class="page-header"><div><div class="eyebrow">Assessments</div><h1>My exams</h1><p>Best of three attempts: your highest graded score counts, even if a later score is lower.</p></div></div>
 @if (TempData["QuizMessage"] is string message) { <div class="alert alert-warning">@message</div> }
 @foreach (var exam in Model)
 {
@@ -10,7 +10,7 @@
                 <p>@exam.QuestionCount questions · @exam.AttemptCount of @ITC.TrainingPortal.Application.DTOs.ExamAccessDto.MaximumAttempts attempts used</p>
                 @if (exam.BestResult is { } best) { <p class="mb-0"><strong>Best score:</strong> @best.Outcome</p> }
             </div>
-            <a asp-action="Introduction" asp-route-id="@exam.QuizId" class="btn @(exam.IsUnlocked && exam.IsActive && (exam.ActiveAttemptId.HasValue || exam.HasAttemptsRemaining) ? "btn-primary" : "btn-outline-secondary")">@(exam.ActiveAttemptId.HasValue ? "Resume exam" : exam.HasAttemptsRemaining && exam.IsUnlocked && exam.IsActive ? exam.AttemptCount > 0 ? "Take again" : "Start exam" : "View exam")</a>
+            <a asp-action="Introduction" asp-route-id="@exam.QuizId" class="btn @((exam.ActiveAttemptId.HasValue || (exam.IsUnlocked && exam.IsActive && exam.HasAttemptsRemaining)) ? "btn-primary" : "btn-outline-secondary")">@(exam.ActiveAttemptId.HasValue ? "Resume exam" : exam.HasAttemptsRemaining && exam.IsUnlocked && exam.IsActive ? exam.AttemptCount > 0 ? "Take again" : "Start exam" : "View exam")</a>
         </div>
         @if (!exam.IsUnlocked && exam.Results.Count == 0) { <div class="alert alert-light mb-0">@exam.UnlockMessage</div> }
         @if (exam.Results.Count > 0) { <hr/><h3 class="h6">Previous attempts</h3>@foreach (var result in exam.Results) { <a asp-action="Result" asp-route-id="@result.Id" class="d-block">@result.AttemptDate.ToLocalTime().ToString("g") — @result.Outcome</a> } }

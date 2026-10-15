@@ -69,6 +69,14 @@ public sealed class ComplianceTests
         db.QuizResults.Add(new QuizResult { EmployeeId = 1, QuizId = 1, IsPassed = true, IsCompleted = true, ScorePercentage = 100 });
         await db.SaveChangesAsync();
         Assert.Equal("Completed", Assert.Single(await service.GetAsync(new())).Status);
+        db.QuizResults.Add(new QuizResult { EmployeeId = 1, QuizId = 1, IsCompleted = false });
+        (await db.TrainingAssignments.SingleAsync()).DueDate = DateTime.UtcNow.AddDays(-1);
+        await db.SaveChangesAsync();
+        var duringRetake = Assert.Single(await service.GetAsync(new()));
+        Assert.Equal("Completed", duringRetake.Status);
+        Assert.Equal("Passed", duringRetake.Exam);
+        Assert.Single(await service.GetAsync(new ReportFilter { Status = "Completed" }, 0, 1));
+        Assert.Empty(await service.GetAsync(new ReportFilter { Status = "Completed" }, 1, 1));
         Assert.Empty(await service.GetAsync(new ReportFilter { EmployeeId = 2 }));
         Assert.Empty(await service.GetAsync(new ReportFilter { DepartmentId = 2 }));
         Assert.Empty(await service.GetAsync(new ReportFilter { Status = "Overdue" }));

@@ -134,6 +134,7 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<QuizQuestion>(entity =>
         {
+            entity.Property(x => x.AnswerKeywords).HasMaxLength(2000);
             entity.HasIndex(x => new { x.QuizId, x.SequenceOrder }).IsUnique();
             entity.HasOne(q => q.Quiz).WithMany(qz => qz.Questions)
                 .HasForeignKey(q => q.QuizId).OnDelete(DeleteBehavior.Cascade);

@@ -1,4 +1,5 @@
 using ITC.TrainingPortal.Application.DTOs;
+using ITC.TrainingPortal.Domain.Exceptions;
 using ITC.TrainingPortal.Application.Identity;
 using ITC.TrainingPortal.Application.Interfaces;
 using ITC.TrainingPortal.Web.Authentication;
@@ -94,13 +95,43 @@ public sealed class QuizController : Controller
     public async Task<IActionResult> DeleteQuestion(int id, int quizId)
     { try { await _service.DeleteQuestionAsync(id); } catch (InvalidOperationException ex) { TempData["QuizMessage"] = ex.Message; } return RedirectToAction(nameof(Details), new { id = quizId }); }
 
+    [Authorize(Policy = PortalPolicies.Administrator), HttpGet("/admin/exams/questions/template.csv")]
+    public IActionResult QuestionCsvTemplate() => File(System.Text.Encoding.UTF8.GetBytes(
+        ITC.TrainingPortal.Web.Services.QuestionCsvReader.Template), "text/csv", "questions-template.csv");
+
+    [Authorize(Policy = PortalPolicies.Administrator), HttpGet("/admin/exams/{quizId:int}/questions/import")]
+    public async Task<IActionResult> ImportQuestions(int quizId) => await _service.GetAsync(quizId) == null ? NotFound() : View(quizId);
+
+    [Authorize(Policy = PortalPolicies.Administrator), HttpPost("/admin/exams/{quizId:int}/questions/import"), ValidateAntiForgeryToken]
+    [RequestSizeLimit(1100000), RequestFormLimits(MultipartBodyLengthLimit = 1100000)]
+    public async Task<IActionResult> ImportQuestions(int quizId, IFormFile? file)
+    {
+        if (await _service.GetAsync(quizId) == null) return NotFound();
+        if (file == null || file.Length == 0 || file.Length > 1048576 || !Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
+            ModelState.AddModelError("", "Choose a non-empty CSV file no larger than 1 MB.");
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                using var reader = new StreamReader(file!.OpenReadStream(), new System.Text.UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true);
+                var questions = ITC.TrainingPortal.Web.Services.QuestionCsvReader.Read(reader, quizId);
+                await _service.ImportQuestionsAsync(quizId, questions);
+                TempData["Success"] = $"Imported {questions.Count} questions.";
+                return RedirectToAction(nameof(Details), new { id = quizId });
+            }
+            catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
+            catch (System.Text.DecoderFallbackException) { ModelState.AddModelError("", "Save the CSV using UTF-8 encoding and upload again."); }
+        }
+        return View(quizId);
+    }
+
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/exams")]
     public async Task<IActionResult> Mine()
     { var employee = await EmployeeAsync(); return employee == null ? Forbid() : View(await _service.GetEmployeeExamsAsync(employee.Id)); }
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/results")]
     public async Task<IActionResult> Results()
-    { var employee = await EmployeeAsync(); return employee == null ? Forbid() : View((await _service.GetEmployeeExamsAsync(employee.Id)).SelectMany(x=>x.Results).OrderByDescending(x=>x.CompletedAt ?? x.AttemptDate).ToList()); }
+    { var employee = await EmployeeAsync(); return employee == null ? Forbid() : View(await _service.GetEmployeeResultsAsync(employee.Id)); }
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/exams/{id:int}")]
     public async Task<IActionResult> Introduction(int id)
@@ -108,7 +139,7 @@ public sealed class QuizController : Controller
 
     [HttpPost("/employee/exams/{id:int}/start"), ValidateAntiForgeryToken, Authorize(Policy = PortalPolicies.Employee)]
     public async Task<IActionResult> Start(int id)
-    { var employee = await EmployeeAsync(); if (employee == null) return Forbid(); try { return View("Attempt", await _service.StartOrResumeAsync(employee.Id, id)); } catch (UnauthorizedAccessException) { return Forbid(); } catch (InvalidOperationException ex) { TempData["QuizMessage"] = ex.Message; return RedirectToAction(nameof(Introduction), new { id }); } }
+    { var employee = await EmployeeAsync(); if (employee == null) return Forbid(); try { return View("Attempt", await _service.StartOrResumeAsync(employee.Id, id)); } catch (UnauthorizedAccessException) { return Forbid(); } catch (ConcurrencyConflictException) { TempData["QuizMessage"] = "The exam changed in another request. Resume the existing attempt from this page."; return RedirectToAction(nameof(Introduction), new { id }); } catch (InvalidOperationException ex) { TempData["QuizMessage"] = ex.Message; return RedirectToAction(nameof(Introduction), new { id }); } }
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/exams/{id:int}/availability")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -121,7 +152,7 @@ public sealed class QuizController : Controller
 
     [HttpPost("/employee/exams/submit"), ValidateAntiForgeryToken, Authorize(Policy = PortalPolicies.Employee)]
     public async Task<IActionResult> Submit(int attemptId, [Bind(Prefix = "answers")] Dictionary<int, string> answers)
-    { var employee = await EmployeeAsync(); if (employee == null) return Forbid(); try { var result = await _service.SubmitAsync(employee.Id, new ExamSubmissionDto { AttemptId = attemptId, Answers = answers }); return RedirectToAction(nameof(Result), new { id = result.Id }); } catch (UnauthorizedAccessException) { return Forbid(); } catch (InvalidOperationException ex) { TempData["QuizMessage"] = ex.Message; return RedirectToAction(nameof(Mine)); } }
+    { var employee = await EmployeeAsync(); if (employee == null) return Forbid(); try { var result = await _service.SubmitAsync(employee.Id, new ExamSubmissionDto { AttemptId = attemptId, Answers = answers }); return RedirectToAction(nameof(Result), new { id = result.Id }); } catch (UnauthorizedAccessException) { return Forbid(); } catch (ConcurrencyConflictException) { TempData["QuizMessage"] = "This attempt changed in another request. Check your results before submitting again."; return RedirectToAction(nameof(Mine)); } catch (InvalidOperationException ex) { TempData["QuizMessage"] = ex.Message; return RedirectToAction(nameof(Mine)); } }
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/results/{id:int}")]
     public async Task<IActionResult> Result(int id)

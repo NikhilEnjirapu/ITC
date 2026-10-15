@@ -2,6 +2,7 @@ namespace ITC.TrainingPortal.Domain.Entities;
 
 public class QuizQuestion : BaseEntity
 {
+    public string AnswerKeywords { get; set; } = string.Empty;
     public bool IsTypedAnswer { get; set; }
     public string QuestionText { get; set; } = string.Empty;
     public string OptionA { get; set; } = string.Empty;

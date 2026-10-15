@@ -16,6 +16,7 @@ public sealed class QuizDto
 
 public sealed class QuizQuestionDto : IValidatableObject
 {
+    [StringLength(2000)] public string? AnswerKeywords { get; set; } = string.Empty;
     public bool IsTypedAnswer { get; set; }
     public int Id { get; set; }
     [Range(1, int.MaxValue)] public int QuizId { get; set; }
@@ -28,6 +29,11 @@ public sealed class QuizQuestionDto : IValidatableObject
     [Range(1, int.MaxValue)] public int SequenceOrder { get; set; }
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
+        if (IsTypedAnswer && !string.IsNullOrWhiteSpace(AnswerKeywords) &&
+            Services.KeywordAnswerMatcher.Keywords(AnswerKeywords).All(x => Services.KeywordAnswerMatcher.Normalize(x).Length == 0))
+            yield return new ValidationResult("Enter keywords containing letters or numbers.", new[] { nameof(AnswerKeywords) });
+        if (IsTypedAnswer && Services.KeywordAnswerMatcher.Keywords(AnswerKeywords).Any(x => Services.KeywordAnswerMatcher.Normalize(x).Length == 0))
+            yield return new ValidationResult("Each keyword must contain letters or numbers.", new[] { nameof(AnswerKeywords) });
         if (!IsTypedAnswer)
         {
             if (new[] { OptionA, OptionB, OptionC, OptionD }.Any(string.IsNullOrWhiteSpace))

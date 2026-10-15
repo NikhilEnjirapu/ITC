@@ -1,0 +1,16 @@
+@model int
+@{ ViewData["Title"] = "Import questions from CSV"; }
+<div class="page-header"><div><h1>Import questions from CSV</h1><p>Add up to 500 questions per upload (maximum 1 MB).</p></div></div>
+<section class="content-card p-4">
+    <p><a asp-action="QuestionCsvTemplate" class="btn btn-outline-primary">Download CSV template</a></p>
+    <p>Use <strong>MCQ</strong> or <strong>Typed</strong> in AnswerType. For MCQ, fill all four options and a correct option (A–D). For typed answers, fill AnswerKeywords with required words or phrases separated by semicolons.</p>
+    <p>All keywords must match to earn one point. Matching ignores case, punctuation and extra spaces, and matches whole words. It does not interpret meaning or negation. Review your keyword choices carefully.</p>
+    <p>Use unique positive SequenceOrder values that are not already in this exam. Uploads append questions. If any row is invalid, no questions are imported. Exams with attempts cannot be changed.</p>
+    <p>Save as UTF-8 CSV. Enclose text containing commas, quotes or line breaks in double quotes; double any quotes inside that text.</p>
+    <form asp-action="ImportQuestions" asp-route-quizId="@Model" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div class="mb-3"><label for="file" class="form-label">Questions CSV</label><input id="file" name="file" type="file" accept=".csv,text/csv" class="form-control" required /></div>
+        <button class="btn btn-primary">Import questions</button>
+        <a asp-action="Details" asp-route-id="@Model" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</section>

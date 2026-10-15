@@ -1,5 +1,29 @@
-@model IReadOnlyList<ITC.TrainingPortal.Application.DTOs.QuizResultDto>
-@{ ViewData["Title"]="Results"; }
-<div class="page-header"><div><div class="eyebrow">My learning</div><h1>Exam results</h1><p>Saved scores and outcomes from completed exams.</p></div></div>
-@if(Model.Count==0){<section class="content-card p-4"><p>No completed exams yet.</p><a asp-action="Mine" class="btn btn-primary">View exams</a></section>}
-@foreach(var result in Model){<section class="content-card p-4 mb-3"><div class="eyebrow">@result.TrainingProgramTitle</div><h2 class="h4">@result.QuizTitle</h2><p>@result.Outcome</p><p>Completed @((result.CompletedAt ?? result.AttemptDate).ToString("dd MMM yyyy HH:mm")) (UTC)</p><a asp-action="Result" asp-route-id="@result.Id" class="btn btn-primary">View result</a></section>}
+﻿@model IReadOnlyList<ITC.TrainingPortal.Application.DTOs.QuizResultDto>
+@{ ViewData["Title"] = "Results"; }
+<div class="page-header"><div><div class="eyebrow">My learning</div><h1>Exam results</h1><p>Best of three attempts: your highest graded score counts. All previous attempts are kept.</p></div></div>
+@if (Model.Count == 0)
+{
+    <section class="content-card p-4"><p>No completed exams yet.</p><a asp-action="Mine" class="btn btn-primary">View exams</a></section>
+}
+@foreach (var exam in Model.GroupBy(x => x.QuizId))
+{
+    var latest = exam.First();
+    var best = exam.Where(x => !x.RequiresReview).OrderByDescending(x => x.ScorePercentage)
+        .ThenByDescending(x => x.CompletedAt ?? x.AttemptDate).FirstOrDefault();
+    <section class="content-card p-4 mb-3">
+        <div class="eyebrow">@latest.TrainingProgramTitle</div><h2 class="h4">@latest.QuizTitle</h2>
+        <p><strong>Best score:</strong> @(best?.Outcome ?? "Awaiting review")</p>
+        <p>@exam.Count() of @ITC.TrainingPortal.Application.DTOs.ExamAccessDto.MaximumAttempts attempts used.</p>
+        @if (exam.Any(x => x.RequiresReview)) { <p>Some answers are awaiting review. They will count toward your best score once graded.</p> }
+        <h3 class="h6">Attempt history</h3>
+        @foreach (var result in exam.OrderBy(x => x.AttemptDate).Select((value, index) => new { value, number = index + 1 }))
+        {
+            <div class="border-top py-2">
+                <p>Attempt @result.number: @result.value.Outcome @if (result.value.Id == best?.Id) { <span class="badge bg-success">Best score</span> }</p>
+                <p>Completed @((result.value.CompletedAt ?? result.value.AttemptDate).ToString("dd MMM yyyy HH:mm")) (UTC)</p>
+                <a asp-action="Result" asp-route-id="@result.value.Id">View result</a>
+            </div>
+        }
+        <a asp-action="Mine" class="btn btn-outline-primary mt-3">View available exams</a>
+    </section>
+}

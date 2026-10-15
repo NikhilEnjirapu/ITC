@@ -134,7 +134,7 @@ public sealed class ExamUnlockTests
                 .Append(new TrainingVideo { Id = 201, TrainingProgramId = 2, SequenceOrder = 1 }).ToArray());
             for(var n = 1; n <= completed; n++) Progress.AddAsync(new() { EmployeeId = 1, TrainingVideoId = 100 + n, IsCompleted = true }).GetAwaiter().GetResult();
         }
-        public QuizService QuizService() => new(_quizzes, _questions, Results, Programs, Assignments, Videos, Progress);
+        public QuizService QuizService() => new(_quizzes, _questions, Results, Programs, Assignments, Videos, Progress, new TestAssessmentTransaction());
         public TrainingProgramService ProgramService() => new(Programs, Videos, Assignments, _quizzes, null!);
     }
 }

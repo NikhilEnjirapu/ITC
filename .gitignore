@@ -18,3 +18,11 @@ TestResults/
 .env.*
 !.env.example
 **/appsettings.Production.json
+
+# Client handover packages
+/clien delivarable/
+
+/clien delivarable.zip
+*.bak
+*.mdf
+*.ldf

@@ -113,8 +113,10 @@ internal sealed class FakeRepository<T> : IRepository<T> where T : BaseEntity
         Task.FromResult<IEnumerable<T>>(_items.AsQueryable().Where(predicate).ToList());
     public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) =>
         Task.FromResult(_items.AsQueryable().Any(predicate));
-    public Task AddAsync(T entity) { _items.Add(entity); return Task.CompletedTask; }
+    public Func<Task>? BeforeAddAsync { get; set; }
+    public Func<Task>? BeforeSaveAsync { get; set; }
+    public async Task AddAsync(T entity) { if (BeforeAddAsync != null) await BeforeAddAsync(); _items.Add(entity); }
     public void Update(T entity) { }
     public void Remove(T entity) => _items.Remove(entity);
-    public Task SaveChangesAsync() => Task.CompletedTask;
+    public Task SaveChangesAsync() => BeforeSaveAsync?.Invoke() ?? Task.CompletedTask;
 }

@@ -13,13 +13,17 @@ namespace ITC.TrainingPortal.Web.Controllers;
 [Authorize(Policy = PortalPolicies.Administrator)]
 public sealed class ReportController(ComplianceReportService reports, ApplicationDbContext db) : Controller
 {
-    public async Task<IActionResult> Index(ReportFilter filter)
+    public async Task<IActionResult> Index(ReportFilter filter, int page = 1)
     {
         ViewBag.Employees = new SelectList(await db.Employees.AsNoTracking().OrderBy(x => x.EmployeeId).ToListAsync(), "Id", "EmployeeId", filter.EmployeeId);
         ViewBag.Departments = new SelectList(await db.Departments.AsNoTracking().OrderBy(x => x.Name).ToListAsync(), "Id", "Name", filter.DepartmentId);
         ViewBag.Programs = new SelectList(await db.TrainingPrograms.AsNoTracking().OrderBy(x => x.Title).ToListAsync(), "Id", "Title", filter.TrainingProgramId);
         ViewBag.Filter = filter;
-        return View(await reports.GetAsync(filter));
+        page = Math.Clamp(page, 1, 100000);
+        var rows = await reports.GetAsync(filter, (page - 1) * 100, 101);
+        ViewBag.Page = page;
+        ViewBag.HasNext = rows.Count > 100;
+        return View(rows.Take(100).ToList());
     }
     public async Task<IActionResult> Csv(ReportFilter filter) => File(ReportExporter.Csv(await reports.GetAsync(filter)),
         "text/csv; charset=utf-8", "training-compliance.csv");

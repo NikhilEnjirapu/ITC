@@ -61,3 +61,34 @@ Date: 2026-09-08. Environment: local Windows, .NET SDK 8.0.424.
 | Expected employee count / concurrent users / long videos | Acceptable performance | Pending load test |
 
 EF in-memory tests do not validate SQL Server transaction rollback or concurrency constraints. No claim is made that the client environment is deployed or fully accepted. Browser controls cannot revoke media bytes already delivered or prevent screen recording; see TECHNICAL.md.
+
+
+## Project review fixes ? 2026-10-15
+
+- Release tests: 246 passed, zero failed/skipped; JavaScript tests: 5 passed.
+- Regression coverage includes resuming an active exam after assignment removal/deactivation, conflict recovery redirects, completion during a retake, and report paging/filtering.
+- Read-only SQL Server checks executed dashboard readiness and report queries against the local database, including every status filter and combined filters/pagination.
+- NuGet vulnerability audit across all five solution projects, including transitive packages: no vulnerable packages reported.
+- Production tenant, target IIS and load testing remain separate acceptance tasks. No database schema change is required for these review fixes.
+
+
+## Follow-up assessment validation ? 2026-10-15
+
+- Release suite: 251 .NET tests passed, zero failed/skipped. Five JavaScript tests passed.
+- Added controlled overlapping-operation tests for third-attempt submission versus resume, question insertion versus start in both orderings, and completed results visibility after assignment removal, including employee isolation.
+- Two independent local SQL Server connections verified exclusive assessment lock waiting, release on commit, and release after an operation throws. The SQL probe did not modify application records.
+- Existing dashboard/report SQL query checks passed. The service race tests use controlled repositories; a full multi-instance SQL workload/load test remains an acceptance task.
+
+
+## Final submission audit ? 2026-10-15
+
+- Release suite: 251 tests passed; five JavaScript tests passed. TRX evidence is supplied in validation.
+- All five projects passed the NuGet dependency vulnerability audit, including transitive dependencies.
+- EF reports no pending model changes. All 11 migrations applied to a newly created isolated SQL database; applying the script again succeeded. Temporary database removed.
+- Corrected SQL session settings in Database.sql after detecting sqlcmd's QUOTED_IDENTIFIER default prevented filtered-index creation.
+- Corrected the historical results-page navigation to use the available-exams list after assignment removal.
+- Four referenced media files exist. MP4 container metadata revealed one configured duration mismatch: ee29c92760d54aacbeeef515ab3e9f09.mp4 is configured as 60 seconds but measures 169.813 seconds. Use 170 seconds when setting up this content. Existing assessed records were not modified. See MEDIA-NOTES.txt and VIDEO-CATALOG.csv in the handover.
+- Real client SSO, target IIS, browser codec acceptance, load testing and client sign-off remain pending. Submission readiness does not constitute production acceptance.
+
+- Final IIS ZIP extracted and started in Production: login/privacy/assets returned 200, protected pages redirected to login, and development login returned 404.
+- Final source ZIP extracted into an empty folder, restored, rebuilt and tested: 251 passed, 0 failed/skipped. See source-archive-tests.trx in the handover validation folder.

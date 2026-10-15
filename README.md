@@ -4,6 +4,7 @@ ASP.NET Core 10 MVC, EF Core / SQL Server, Entra ID SSO and IIS deployment.
 
 Video counts are administrator-managed CRUD; there is no fixed four/five-video limit. Programs need at least one video before their quiz can unlock.
 
+- [Demo on another laptop (no corporate SSO required)](docs/DEMO-ON-ANOTHER-LAPTOP.md)
 - [Installation and upgrade](docs/INSTALLATION.md)
 - [Administrator and employee manual](docs/USER-MANUAL.md)
 - [Technical notes and requirement status](docs/TECHNICAL.md)

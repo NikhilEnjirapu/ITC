@@ -2,7 +2,7 @@
 
 ## Package and prerequisites
 
-The release archive is artifacts/TrainingPortal-IIS.zip. The archive includes the application, generated IIS web.config, deployment scripts and documentation. Temporary publish folders have been removed; use the rebuild commands below to regenerate artifacts/publish. Source remains in this workspace. The source sharing archive, artifacts/TrainingPortal-Source.zip, excludes Git history, generated builds, local runtime data and release binaries. Uploaded videos must be transferred separately when required. Both archives use standard ZIP paths and extract with Windows Explorer, macOS Archive Utility or `unzip`.
+The release archive is artifacts/TrainingPortal-IIS.zip. The archive includes the application, generated IIS web.config, deployment scripts and documentation. Use the rebuild commands below to regenerate artifacts/publish. The final handover folder contains fresh IIS/source archives, a separate media archive, deployment scripts, documentation and validation evidence. Source remains in this workspace. The source sharing archive, artifacts/TrainingPortal-Source.zip, excludes Git history, generated builds, local runtime data and release binaries. Uploaded videos must be transferred separately when required. Both archives use standard ZIP paths and extract with Windows Explorer, macOS Archive Utility or `unzip`.
 
 Use Windows Server 2022, IIS, SQL Server and the .NET 10 ASP.NET Core Hosting Bundle. Install IIS before the bundle (repair the bundle if installed first). Create an application pool with No Managed Code, Integrated pipeline, and a dedicated service identity. Bind the site to HTTPS with a trusted certificate. See [Microsoft IIS deployment guidance](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-10.0).
 
@@ -18,7 +18,7 @@ Set ASPNETCORE_ENVIRONMENT=Production. Give the identity read access to the publ
 6. For a new database, use deployment/BootstrapAdministrator.sql after replacing its placeholders to create the first verified administrator employee record. The corporate app role is assigned separately in Entra.
 7. Give the runtime SQL identity the required application table permissions. Restrict AuditLogs to SELECT/INSERT, with no UPDATE/DELETE for the runtime identity. Schema migration credentials should be separate.
 
-No migration was applied to the existing project database during implementation.
+The local development database has received AddAnswerKeywords. The client database must still receive the current deployment script before rollout.
 
 ## Corporate SSO
 
@@ -36,7 +36,7 @@ Enter the correct whole-second duration and verify each file in the target brows
 
 ## Verification and operation
 
-Run the client acceptance checklist in TEST-REPORT.md with real corporate identities and at least two browser tabs. Verify SQL persistence across app-pool recycle, CSV output in workforce languages, video codecs, large files and proxy timeouts. Reports currently load matching assignments into memory; load-test the expected workforce size before production.
+Run the client acceptance checklist in TEST-REPORT.md with real corporate identities and at least two browser tabs. Verify SQL persistence across app-pool recycle, CSV output in workforce languages, video codecs, large files and proxy timeouts. Reports calculate summaries in SQL and display 100 rows per page; CSV exports include all matching rows. Load-test the expected workforce size before production.
 
 Operational logs rotate daily under App_Data/Logs (30 retained files). Audit rows remain in SQL until an organization-approved retention/archive process runs; the portal provides no audit deletion endpoint. Back up database, private media, configuration and data-protection keys. An upgrade rollback requires a matching database backup and previous application package; do not restore old binaries against a changed schema without compatibility review.
 
@@ -63,6 +63,14 @@ The later `PersistShuffledQuestionOrder` migration adds the saved order for each
 
 Install the .NET SDK 10.0.401 (or a newer 10.0.4xx patch allowed by global.json) on build machines. Run `dotnet tool restore`, `dotnet restore`, `dotnet test ITC.TrainingPortal.sln`, then `dotnet publish ITC.TrainingPortal.Web -c Release -o artifacts/publish-net10`.
 
-The IIS server requires the .NET 10 ASP.NET Core Hosting Bundle, version 10.0.12 or a later servicing release. A desktop runtime alone is insufficient. Deploy the supplied `TrainingPortal-IIS.zip` or a newly published .NET 10 output directory. Keep SQL Server configuration, private video storage and data-protection keys when deploying.
+The IIS server requires the .NET 10 ASP.NET Core Hosting Bundle, version 10.0.13 or a later servicing release. A desktop runtime alone is insufficient. Deploy the supplied `TrainingPortal-IIS.zip` or a newly published .NET 10 output directory. Keep SQL Server configuration, private video storage and data-protection keys when deploying.
 
 Developer machines should install the SDK required by `global.json`.
+
+
+The `AddAnswerKeywords` migration adds a non-null `AnswerKeywords` column to QuizQuestions, with an empty default for existing questions. Apply the updated `deployment/Database.sql` before starting this version. Existing typed questions keep manual review until keywords can be configured (questions with attempts remain locked). This implementation does not apply migrations to your database automatically.
+
+
+## SQL script session settings
+
+The supplied Database.sql begins with the session options required by SQL Server filtered indexes. Preserve this preamble if regenerating the EF script. When running a newly generated raw EF script with sqlcmd, use `-I` to enable QUOTED_IDENTIFIER (and `-b` to stop on errors). The final supplied script was tested against a fresh isolated database and then applied a second time.

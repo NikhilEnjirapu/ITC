@@ -14,13 +14,12 @@ public sealed class AdminWorkflowService(ApplicationDbContext db)
 {
     public async Task<List<ProgramReadiness>> ProgramsAsync()
     {
-        var programs = await db.TrainingPrograms.AsNoTracking().Include(x => x.Videos)
-            .Include(x => x.Quiz).ThenInclude(x => x!.Questions).OrderBy(x => x.Title).ToListAsync();
-        return programs.Select(p => new ProgramReadiness(p.Id, p.Title,
-            p.Videos.Count == 0 ? "Add videos" : p.Quiz == null ? "Create exam" :
-            p.Quiz.Questions.Count == 0 ? "Add exam questions" : !p.Quiz.IsActive ? "Activate exam" :
-            p.ExamUnlockCondition == ExamUnlockCondition.SpecificVideo && !p.Videos.Any(v => v.Id == p.ExamUnlockVideoId)
-                ? "Choose an available unlock video" : null)).ToList();
+        return await db.TrainingPrograms.AsNoTracking().OrderBy(p => p.Title)
+            .Select(p => new ProgramReadiness(p.Id, p.Title,
+                !p.Videos.Any() ? "Add videos" : p.Quiz == null ? "Create exam" :
+                !p.Quiz.Questions.Any() ? "Add exam questions" : !p.Quiz.IsActive ? "Activate exam" :
+                p.ExamUnlockCondition == ExamUnlockCondition.SpecificVideo && !p.Videos.Any(v => v.Id == p.ExamUnlockVideoId)
+                    ? "Choose an available unlock video" : null)).ToListAsync();
     }
 
     public async Task<List<Employee>> EligibleEmployeesAsync()

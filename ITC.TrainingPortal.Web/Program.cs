@@ -145,6 +145,7 @@ builder.Services.AddScoped<ITrainingProgramDeletion, TrainingProgramDeletion>();
 builder.Services.AddScoped<ITrainingVideoService, TrainingVideoService>();
 builder.Services.AddScoped<ITrainingAssignmentService, TrainingAssignmentService>();
 builder.Services.AddScoped<ITrainingPlaybackService, TrainingPlaybackService>();
+builder.Services.AddScoped<IAssessmentTransaction, AssessmentTransaction>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IEmployeeIdentityResolver, EmployeeIdentityResolver>();
 builder.Services.AddScoped<ICurrentEmployeeAccessor, CurrentEmployeeAccessor>();

@@ -33,13 +33,15 @@ public sealed class ExamReviewController(ApplicationDbContext db) : Controller
         if (result == null) return NotFound();
         if (!result.RequiresReview || Convert.ToBase64String(result.RowVersion) != (rowVersion ?? ""))
             return Conflict("This result has already changed. Reload it before reviewing.");
-        var typed = result.Quiz.Questions.Where(x => x.IsTypedAnswer).ToList();
+        var typed = result.Quiz.Questions.Where(x => x.IsTypedAnswer && string.IsNullOrWhiteSpace(x.AnswerKeywords)).ToList();
         if (!ModelState.IsValid || marks.Count != typed.Count || typed.Any(x => !marks.ContainsKey(x.Id)))
         {
             ModelState.AddModelError("", "Mark every typed answer correct or incorrect.");
             return View(result);
         }
         var answers = JsonSerializer.Deserialize<Dictionary<int, string>>(result.SubmittedAnswersJson ?? "{}")!;
+        foreach (var question in result.Quiz.Questions.Where(x => x.IsTypedAnswer && !string.IsNullOrWhiteSpace(x.AnswerKeywords)))
+            marks[question.Id] = ITC.TrainingPortal.Application.Services.KeywordAnswerMatcher.IsMatch(answers.GetValueOrDefault(question.Id), question.AnswerKeywords);
         var correct = result.Quiz.Questions.Count(x => x.IsTypedAnswer ? marks[x.Id] :
             answers.TryGetValue(x.Id, out var answer) && string.Equals(answer, x.CorrectOption, StringComparison.OrdinalIgnoreCase));
         result.ScorePercentage = (int)Math.Round(correct * 100d / result.Quiz.Questions.Count, MidpointRounding.AwayFromZero);
