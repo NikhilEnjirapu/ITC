@@ -28,6 +28,6 @@ public sealed partial class DevelopmentAuthenticationTests
         Assert.Contains("TrainingProgramId=10",destination);Assert.Contains("Status=Completed",destination);
         var report=await client.GetStringAsync(destination);
         Assert.Contains("Progress &amp; Reports",report);
-        Assert.Contains("Export Excel",report);Assert.Contains("Export PDF",report);
+        Assert.Contains("Export CSV",report);Assert.DoesNotContain("Export PDF",report);
     }
 }

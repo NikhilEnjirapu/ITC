@@ -1,0 +1,9 @@
+@model IReadOnlyList<ITC.TrainingPortal.Domain.Entities.QuizResult>
+@{ ViewData["Title"] = "Review typed answers"; }
+<div class="page-header"><h1>Review typed answers</h1><a href="/admin/exams" class="btn btn-outline-secondary">Back to exams</a></div>
+<section class="content-card p-4">
+@if(Model.Count == 0){<p>No answers awaiting review.</p>}
+@foreach(var result in Model){
+    <div class="border-bottom py-3"><h2 class="h5">@result.Quiz.Title</h2><p>@result.Employee.EmployeeId — @result.Employee.FirstName @result.Employee.LastName · Submitted @result.CompletedAt?.ToString("dd MMM yyyy HH:mm") UTC</p><a href="/admin/exam-reviews/@result.Id" class="btn btn-primary">Review answers</a></div>
+}
+</section>

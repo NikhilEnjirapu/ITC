@@ -31,8 +31,8 @@ public sealed partial class DevelopmentAuthenticationTests
             await db.SaveChangesAsync();
         }
         var exams=await client.GetStringAsync("/employee/exams");
-        Assert.Contains("No pending exams",exams);
-        Assert.DoesNotContain(">Start Exam<",exams);
+        Assert.Contains("1 of 3 attempts used",exams);
+        Assert.Contains("Take again",exams);
         var results=await client.GetStringAsync("/employee/results");
         Assert.Contains("Safety exam",results);Assert.Contains("100%",results);
         Assert.Contains("All assigned training is complete",await client.GetStringAsync("/employee"));

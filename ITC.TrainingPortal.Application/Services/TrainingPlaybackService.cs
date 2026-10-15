@@ -9,6 +9,8 @@ public sealed class TrainingPlaybackService : ITrainingPlaybackService
 {
     private const double MaximumHeartbeatGapSeconds = 20;
     private const double TimingToleranceSeconds = 1;
+    // Browser media duration and administrator-entered whole seconds can differ at the final fractional second.
+    private const double EndedCompletionToleranceSeconds = 1;
     private readonly IRepository<TrainingAssignment> _assignments;
     private readonly IRepository<TrainingProgram> _programs;
     private readonly IRepository<TrainingVideo> _videos;
@@ -99,7 +101,11 @@ public sealed class TrainingPlaybackService : ITrainingPlaybackService
         if (advance > 0 && advance > credit + TimingToleranceSeconds)
             throw new ITC.TrainingPortal.Domain.Exceptions.PlaybackTimingException(saved.CurrentPositionSeconds, request.PositionSeconds, elapsed, credit);
 
-        var accepted = Math.Min(video.DurationSeconds, (int)Math.Floor(request.PositionSeconds));
+        var endedAtDurationBoundary = request.PlaybackState == "ended" &&
+            request.PositionSeconds >= video.DurationSeconds - EndedCompletionToleranceSeconds;
+        var accepted = endedAtDurationBoundary
+            ? video.DurationSeconds
+            : Math.Min(video.DurationSeconds, (int)Math.Floor(request.PositionSeconds));
         if (accepted > saved.CurrentPositionSeconds) saved.CurrentPositionSeconds = accepted;
         // Keep any timing debt: the tolerance is not extra credit on every request.
         saved.PlaybackCreditSeconds = credit - advance;

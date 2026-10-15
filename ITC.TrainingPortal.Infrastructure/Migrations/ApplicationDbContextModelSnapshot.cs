@@ -17,7 +17,7 @@ namespace ITC.TrainingPortal.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.26")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -237,6 +237,9 @@ namespace ITC.TrainingPortal.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsTypedAnswer")
+                        .HasColumnType("bit");
+
                     b.Property<string>("OptionA")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -300,8 +303,23 @@ namespace ITC.TrainingPortal.Infrastructure.Migrations
                     b.Property<bool>("IsPassed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("ManualMarksJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("QuestionOrderJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("QuizId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("RequiresReview")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()

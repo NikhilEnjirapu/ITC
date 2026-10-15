@@ -8,6 +8,6 @@
     <div class="detail-item"><dt>Department</dt><dd>@(Model.DepartmentName ?? "Not available")</dd></div>
     <div class="detail-item"><dt>Training program</dt><dd><a asp-controller="TrainingProgram" asp-action="Details" asp-route-id="@Model.TrainingProgramId">@Model.TrainingProgramTitle</a></dd></div>
     <div class="detail-item"><dt>Status</dt><dd><span class="badge-status status-pending">@statuses.GetValueOrDefault(Model.Id, "Not started")</span></dd></div>
-    <div class="detail-item"><dt>Assigned date</dt><dd>@Model.AssignedAt.ToString("dd MMM yyyy HH:mm")</dd></div>
-    <div class="detail-item"><dt>Due date</dt><dd>@(Model.DueDate?.ToString("dd MMM yyyy HH:mm") ?? "Not set")</dd></div>
+    <div class="detail-item"><dt>Assigned on (IST)</dt><dd>@PortalTime.ToLocal(Model.AssignedAt).ToString("dd MMM yyyy hh:mm tt")</dd></div>
+    <div class="detail-item"><dt>Due by (IST)</dt><dd>@((Model.DueDate.HasValue ? PortalTime.ToLocal(Model.DueDate.Value).ToString("dd MMM yyyy hh:mm tt") : null) ?? "Not set")</dd></div>
 </dl></section>

@@ -33,7 +33,7 @@
         {
             <div class="table-responsive"><table class="table"><thead><tr><th>Employee</th><th>Department</th><th>Assigned</th></tr></thead><tbody>
             @foreach (var assignment in Model.Assignments)
-            {<tr><td><a asp-controller="TrainingAssignment" asp-action="Details" asp-route-id="@assignment.Id">@assignment.EmployeeName</a></td><td>@(assignment.DepartmentName ?? "—")</td><td>@assignment.AssignedAt.ToString("dd MMM yyyy")</td></tr>}
+            {<tr><td><a asp-controller="TrainingAssignment" asp-action="Details" asp-route-id="@assignment.Id">@assignment.EmployeeName</a></td><td>@(assignment.DepartmentName ?? "—")</td><td>@PortalTime.ToLocal(assignment.AssignedAt).ToString("dd MMM yyyy")</td></tr>}
             </tbody></table></div>
         }
         else

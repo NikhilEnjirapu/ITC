@@ -6,7 +6,7 @@
 4. Create an exam draft and add questions. New questions use the next available order; Save and add another keeps the author in question entry.
 5. Open Exam availability after adding videos and questions. Choose all videos or a named video. The rule makes the exam available; employees still choose when to start it.
 6. Activate the exam through Edit exam. Activation requires videos and questions. Program setup displays remaining prerequisites or Ready to assign.
-7. Assign one or more eligible employees. Review the selected program and its exam availability, then enter an optional due date. Dates on assignment forms are UTC. Existing assignments in a batch are rejected before new assignments are written.
+7. Assign one or more eligible employees. Review the selected program and its exam availability, then enter an optional due date. Assignment forms display India Standard Time (IST); dates are stored in UTC. Assigned on defaults to the current time, and the due date is optional. Use Filter and select (department, name or employee ID) or Upload CSV. Preview the group, then confirm. Duplicate IDs, existing assignments, unknown IDs and ineligible employees are skipped with reasons.
 8. Monitor the same status in assignments, progress, and reports. Reports support filtering, exporting, and links to employee/program details.
 
 ## Maintenance

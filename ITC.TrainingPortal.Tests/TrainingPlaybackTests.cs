@@ -98,6 +98,38 @@ public sealed class TrainingPlaybackTests
     }
 
     [Fact]
+    public async Task Ended_Event_Within_Final_Second_Completes_Video()
+    {
+        var saved = new VideoProgress { EmployeeId=1, TrainingVideoId=100, CurrentPositionSeconds=98,
+            PlaybackState="playing", UpdatedAt=DateTime.UtcNow.AddSeconds(-2) };
+        var service=Service(assignments:[new(){EmployeeId=1,TrainingProgramId=10}],progress:[saved]);
+        var result=await service.RecordHeartbeatAsync(1,new(){VideoId=100,PositionSeconds=99,PlaybackState="ended"});
+        Assert.True(result.IsCompleted);
+        Assert.Equal(100,result.AcceptedPositionSeconds);
+    }
+
+    [Fact]
+    public async Task Paused_Event_Within_Final_Second_Does_Not_Complete_Video()
+    {
+        var saved = new VideoProgress { EmployeeId=1, TrainingVideoId=100, CurrentPositionSeconds=98,
+            PlaybackState="playing", UpdatedAt=DateTime.UtcNow.AddSeconds(-2) };
+        var service=Service(assignments:[new(){EmployeeId=1,TrainingProgramId=10}],progress:[saved]);
+        var result=await service.RecordHeartbeatAsync(1,new(){VideoId=100,PositionSeconds=99,PlaybackState="paused"});
+        Assert.False(result.IsCompleted);
+        Assert.Equal(99,result.AcceptedPositionSeconds);
+    }
+
+    [Fact]
+    public async Task Ended_Event_More_Than_One_Second_Early_Does_Not_Complete_Video()
+    {
+        var saved = new VideoProgress { EmployeeId=1, TrainingVideoId=100, CurrentPositionSeconds=94,
+            PlaybackState="playing", UpdatedAt=DateTime.UtcNow.AddSeconds(-5) };
+        var service=Service(assignments:[new(){EmployeeId=1,TrainingProgramId=10}],progress:[saved]);
+        var result=await service.RecordHeartbeatAsync(1,new(){VideoId=100,PositionSeconds=95,PlaybackState="ended"});
+        Assert.False(result.IsCompleted);
+    }
+
+    [Fact]
     public async Task Pausing_Saves_The_Last_Played_Position()
     {
         var saved = new VideoProgress { EmployeeId=1, TrainingVideoId=100, UpdatedAt=DateTime.UtcNow.AddSeconds(-6) };

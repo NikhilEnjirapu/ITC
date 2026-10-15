@@ -140,6 +140,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<ITrainingProgramService, TrainingProgramService>();
 builder.Services.AddScoped<ITC.TrainingPortal.Web.Services.AdminWorkflowService>();
+builder.Services.AddScoped<ITC.TrainingPortal.Web.Services.BatchAssignmentService>();
 builder.Services.AddScoped<ITrainingProgramDeletion, TrainingProgramDeletion>();
 builder.Services.AddScoped<ITrainingVideoService, TrainingVideoService>();
 builder.Services.AddScoped<ITrainingAssignmentService, TrainingAssignmentService>();

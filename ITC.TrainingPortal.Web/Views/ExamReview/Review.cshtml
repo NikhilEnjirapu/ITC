@@ -1,0 +1,29 @@
+@model ITC.TrainingPortal.Domain.Entities.QuizResult
+@using System.Text.Json
+@{ ViewData["Title"] = "Review answers";
+   var answers = JsonSerializer.Deserialize<Dictionary<int,string>>(Model.SubmittedAnswersJson ?? "{}")!;
+   var marks = JsonSerializer.Deserialize<Dictionary<int,bool>>(Model.ManualMarksJson ?? "{}")!;
+   var configuredQuestions = Model.Quiz.Questions.ToDictionary(x => x.Id);
+   var savedOrder = JsonSerializer.Deserialize<int[]>(Model.QuestionOrderJson ?? "[]") ?? [];
+   var reviewQuestions = savedOrder.Length == configuredQuestions.Count && savedOrder.All(configuredQuestions.ContainsKey)
+       ? savedOrder.Select(id => configuredQuestions[id]).ToList()
+       : Model.Quiz.Questions.OrderBy(x => x.SequenceOrder).ToList();
+}
+<div class="page-header"><div><h1>@Model.Quiz.Title</h1><p>@Model.Employee.EmployeeId — @Model.Employee.FirstName @Model.Employee.LastName</p></div><a href="/admin/exam-reviews" class="btn btn-outline-secondary">Back to reviews</a></div>
+<section class="content-card p-4">
+@if(!Model.RequiresReview){<p>Final score: @Model.ScorePercentage% — @(Model.IsPassed ? "Passed" : "Failed")</p><p>Reviewed @Model.ReviewedAt?.ToString("g") UTC by @Model.ReviewedBy</p>}
+<form method="post" asp-action="Review" asp-route-id="@Model.Id">
+<div asp-validation-summary="All" class="text-danger"></div>
+<input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)"/>
+@foreach(var item in reviewQuestions.Select((question, index) => new { question, index })){
+    var q = item.question;
+    <fieldset class="border rounded p-3 mb-3"><legend class="h5">@(item.index + 1). @q.QuestionText</legend>
+    <p style="white-space: pre-wrap">@answers.GetValueOrDefault(q.Id)</p>
+    @if(q.IsTypedAnswer){
+        @if(Model.RequiresReview){<label for="mark@q.Id" class="form-label">Mark this answer</label><select id="mark@q.Id" name="marks[@q.Id]" class="form-select" required><option value="">Select a mark</option><option value="true">Correct (1 point)</option><option value="false">Incorrect (0 points)</option></select>}
+        else{<p>@(marks.GetValueOrDefault(q.Id) ? "Correct" : "Incorrect")</p>}
+    }else{<p>Correct option: @q.CorrectOption (automatically marked)</p>}
+    </fieldset>
+}
+@if(Model.RequiresReview){<p>Each question has equal weight. Publishing the result makes the final score visible to the employee.</p><button class="btn btn-primary">Publish result</button>}
+</form></section>

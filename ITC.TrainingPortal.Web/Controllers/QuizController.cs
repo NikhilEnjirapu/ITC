@@ -96,7 +96,7 @@ public sealed class QuizController : Controller
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/exams")]
     public async Task<IActionResult> Mine()
-    { var employee = await EmployeeAsync(); return employee == null ? Forbid() : View((await _service.GetEmployeeExamsAsync(employee.Id)).Where(x=>x.Results.Count==0 || x.ActiveAttemptId.HasValue).ToList()); }
+    { var employee = await EmployeeAsync(); return employee == null ? Forbid() : View(await _service.GetEmployeeExamsAsync(employee.Id)); }
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/results")]
     public async Task<IActionResult> Results()
@@ -104,7 +104,7 @@ public sealed class QuizController : Controller
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/exams/{id:int}")]
     public async Task<IActionResult> Introduction(int id)
-    { var employee = await EmployeeAsync(); if (employee == null) return Forbid(); var access=await _service.GetAccessAsync(employee.Id,id); if(access==null)return NotFound(); if(access.Results.Count>0 && !access.ActiveAttemptId.HasValue)return RedirectToAction(nameof(Result),new{id=access.Results[0].Id});return View(access); }
+    { var employee = await EmployeeAsync(); if (employee == null) return Forbid(); var access=await _service.GetAccessAsync(employee.Id,id); return access==null ? NotFound() : View(access); }
 
     [HttpPost("/employee/exams/{id:int}/start"), ValidateAntiForgeryToken, Authorize(Policy = PortalPolicies.Employee)]
     public async Task<IActionResult> Start(int id)
@@ -120,7 +120,7 @@ public sealed class QuizController : Controller
     }
 
     [HttpPost("/employee/exams/submit"), ValidateAntiForgeryToken, Authorize(Policy = PortalPolicies.Employee)]
-    public async Task<IActionResult> Submit(int attemptId, Dictionary<int, string> answers)
+    public async Task<IActionResult> Submit(int attemptId, [Bind(Prefix = "answers")] Dictionary<int, string> answers)
     { var employee = await EmployeeAsync(); if (employee == null) return Forbid(); try { var result = await _service.SubmitAsync(employee.Id, new ExamSubmissionDto { AttemptId = attemptId, Answers = answers }); return RedirectToAction(nameof(Result), new { id = result.Id }); } catch (UnauthorizedAccessException) { return Forbid(); } catch (InvalidOperationException ex) { TempData["QuizMessage"] = ex.Message; return RedirectToAction(nameof(Mine)); } }
 
     [Authorize(Policy = PortalPolicies.Employee), HttpGet("/employee/results/{id:int}")]

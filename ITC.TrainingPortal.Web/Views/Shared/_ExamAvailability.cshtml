@@ -1,14 +1,8 @@
 @model ITC.TrainingPortal.Application.DTOs.ExamAccessDto
-<section id="examAvailability" class="content-card p-3 my-3 @(Model.Results.Count == 0 && Model.IsUnlocked && Model.IsActive ? "exam-available" : "")"
-         data-availability-url="@Url.Action("Availability", "Quiz", new { id = Model.QuizId })" aria-live="polite">
-    @if(Model.Results.Count > 0 && !Model.ActiveAttemptId.HasValue) { <p>Exam completed</p><a asp-controller="Quiz" asp-action="Result" asp-route-id="@Model.Results[0].Id" target="_top" class="btn btn-primary">View result</a> } else if(Model.IsUnlocked && Model.IsActive)
-    {
-        <p class="mb-2">Exam Unlocked</p>
-        <a asp-controller="Quiz" asp-action="Introduction" asp-route-id="@Model.QuizId" target="_top" class="btn btn-primary">Start Exam</a>
-    }
-    else
-    {
-        <strong>Exam locked</strong>
-        <p class="mb-0">@(Model.IsActive ? Model.UnlockMessage : "This exam is currently inactive.")</p>
-    }
+<section id="examAvailability" class="content-card p-3 my-3 @(Model.Results.Count == 0 && Model.IsUnlocked && Model.IsActive ? "exam-available" : "")" data-availability-url="@Url.Action("Availability", "Quiz", new { id = Model.QuizId })" aria-live="polite">
+@if (Model.BestResult is { } best) { <p class="mb-2"><strong>Best score:</strong> @best.Outcome</p><a asp-controller="Quiz" asp-action="Result" asp-route-id="@best.Id" target="_top" class="btn btn-outline-primary">View best result</a> }
+@if (Model.IsUnlocked && Model.IsActive && (Model.ActiveAttemptId.HasValue || Model.HasAttemptsRemaining)) { <p class="my-2">@Model.AttemptCount of @ITC.TrainingPortal.Application.DTOs.ExamAccessDto.MaximumAttempts attempts used.</p><a asp-controller="Quiz" asp-action="Introduction" asp-route-id="@Model.QuizId" target="_top" class="btn btn-primary">@(Model.ActiveAttemptId.HasValue ? "Resume exam" : Model.AttemptCount > 0 ? "Take exam again" : "Start Exam")</a> }
+else if (!Model.IsUnlocked) { <strong>Exam locked</strong><p class="mb-0">@Model.UnlockMessage</p> }
+else if (!Model.IsActive) { <p class="mb-0">This exam is currently inactive.</p> }
+else { <p class="mb-0">All @ITC.TrainingPortal.Application.DTOs.ExamAccessDto.MaximumAttempts attempts have been used.</p> }
 </section>

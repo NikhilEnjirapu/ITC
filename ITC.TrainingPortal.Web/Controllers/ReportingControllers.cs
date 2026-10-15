@@ -21,9 +21,8 @@ public sealed class ReportController(ComplianceReportService reports, Applicatio
         ViewBag.Filter = filter;
         return View(await reports.GetAsync(filter));
     }
-    public async Task<IActionResult> Excel(ReportFilter filter) => File(ReportExporter.Excel(await reports.GetAsync(filter)),
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "training-compliance.xlsx");
-    public async Task<IActionResult> Pdf(ReportFilter filter) => File(ReportExporter.Pdf(await reports.GetAsync(filter)), "application/pdf", "training-compliance.pdf");
+    public async Task<IActionResult> Csv(ReportFilter filter) => File(ReportExporter.Csv(await reports.GetAsync(filter)),
+        "text/csv; charset=utf-8", "training-compliance.csv");
 }
 
 public sealed class ProgressController(ComplianceReportService reports, ICurrentEmployeeAccessor accessor) : Controller

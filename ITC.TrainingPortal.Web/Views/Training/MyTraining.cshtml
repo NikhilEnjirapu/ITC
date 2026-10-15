@@ -17,11 +17,11 @@ else
     @foreach (var item in Model.Assignments)
     {
         <article class="content-card training-card"><div class="content-card-body">
-            <div class="eyebrow">Assigned @item.AssignedAt.ToString("dd MMM yyyy")</div><h2>@item.TrainingProgramTitle</h2><p>@(item.Description ?? "No description provided")</p>
+            <div class="eyebrow">Assigned @PortalTime.ToLocal(item.AssignedAt).ToString("dd MMM yyyy")</div><h2>@item.TrainingProgramTitle</h2><p>@(item.Description ?? "No description provided")</p>
             <div class="d-flex justify-content-between small mb-2"><span>@item.CompletedVideoCount / @item.VideoCount videos completed</span><strong>@item.ProgressPercentage%</strong></div>
             <div class="progress mb-3" role="progressbar" aria-label="Training progress" aria-valuenow="@item.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:@item.ProgressPercentage%"></div></div>
-            <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge-status @(item.TrainingStatus == "Complete" ? "status-complete" : item.TrainingStatus == "In Progress" ? "status-progress" : "status-pending")">@item.TrainingStatus</span><span class="badge-status status-pending">@item.ExamStatus</span>@if(item.DueDate.HasValue){<span class="text-muted small align-self-center">Due @item.DueDate.Value.ToString("dd MMM yyyy")</span>}</div>
-            @if(Model.ExamResults.TryGetValue(item.TrainingProgramId, out var result)) { <p>Exam completed: @result.ScorePercentage% — @(result.IsPassed ? "Passed" : "Failed")</p><a asp-controller="Quiz" asp-action="Result" asp-route-id="@result.Id" class="btn btn-primary">View result</a> }
+            <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge-status @(item.TrainingStatus == "Complete" ? "status-complete" : item.TrainingStatus == "In Progress" ? "status-progress" : "status-pending")">@item.TrainingStatus</span><span class="badge-status status-pending">@item.ExamStatus</span>@if(item.DueDate.HasValue){<span class="text-muted small align-self-center">Due @PortalTime.ToLocal(item.DueDate.Value).ToString("dd MMM yyyy")</span>}</div>
+            @if(Model.ExamResults.TryGetValue(item.TrainingProgramId, out var result)) { <p>Best exam score: @result.Outcome</p><a asp-controller="Quiz" asp-action="Result" asp-route-id="@result.Id" class="btn btn-primary">View best result</a> }
             @if(item.CurrentVideoTitle is not null){<p class="small"><strong>Next:</strong> @item.CurrentVideoTitle</p>}
             <a asp-controller="Training" asp-action="Content" asp-route-id="@item.TrainingProgramId" class="btn btn-primary">@(item.CompletedVideoCount > 0 ? "Continue training" : "Open training")</a>
         </div></article>

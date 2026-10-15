@@ -9,8 +9,6 @@ END;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260825190828_InitialCreate'
@@ -28,7 +26,6 @@ BEGIN
         CONSTRAINT [PK_AuditLogs] PRIMARY KEY ([Id])
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -44,7 +41,6 @@ BEGIN
         CONSTRAINT [PK_Departments] PRIMARY KEY ([Id])
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -61,7 +57,6 @@ BEGIN
         CONSTRAINT [PK_EligibilityRules] PRIMARY KEY ([Id])
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -77,7 +72,6 @@ BEGIN
         CONSTRAINT [PK_TrainingPrograms] PRIMARY KEY ([Id])
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -98,7 +92,6 @@ BEGIN
         CONSTRAINT [FK_Employees_Departments_DepartmentId] FOREIGN KEY ([DepartmentId]) REFERENCES [Departments] ([Id]) ON DELETE NO ACTION
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -116,7 +109,6 @@ BEGIN
         CONSTRAINT [FK_Quizzes_TrainingPrograms_TrainingProgramId] FOREIGN KEY ([TrainingProgramId]) REFERENCES [TrainingPrograms] ([Id]) ON DELETE CASCADE
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -136,7 +128,6 @@ BEGIN
         CONSTRAINT [FK_TrainingVideos_TrainingPrograms_TrainingProgramId] FOREIGN KEY ([TrainingProgramId]) REFERENCES [TrainingPrograms] ([Id]) ON DELETE CASCADE
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -156,7 +147,6 @@ BEGIN
         CONSTRAINT [FK_TrainingAssignments_TrainingPrograms_TrainingProgramId] FOREIGN KEY ([TrainingProgramId]) REFERENCES [TrainingPrograms] ([Id]) ON DELETE CASCADE
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -179,7 +169,6 @@ BEGIN
         CONSTRAINT [FK_QuizQuestions_Quizzes_QuizId] FOREIGN KEY ([QuizId]) REFERENCES [Quizzes] ([Id]) ON DELETE CASCADE
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -200,7 +189,6 @@ BEGIN
         CONSTRAINT [FK_QuizResults_Quizzes_QuizId] FOREIGN KEY ([QuizId]) REFERENCES [Quizzes] ([Id]) ON DELETE CASCADE
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -220,7 +208,6 @@ BEGIN
         CONSTRAINT [FK_VideoProgresses_TrainingVideos_TrainingVideoId] FOREIGN KEY ([TrainingVideoId]) REFERENCES [TrainingVideos] ([Id]) ON DELETE CASCADE
     );
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -229,7 +216,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_Employees_DepartmentId] ON [Employees] ([DepartmentId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -238,7 +224,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_QuizQuestions_QuizId] ON [QuizQuestions] ([QuizId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -247,7 +232,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_QuizResults_EmployeeId] ON [QuizResults] ([EmployeeId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -256,7 +240,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_QuizResults_QuizId] ON [QuizResults] ([QuizId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -265,7 +248,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [IX_Quizzes_TrainingProgramId] ON [Quizzes] ([TrainingProgramId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -274,7 +256,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_TrainingAssignments_EmployeeId] ON [TrainingAssignments] ([EmployeeId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -283,7 +264,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_TrainingAssignments_TrainingProgramId] ON [TrainingAssignments] ([TrainingProgramId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -292,7 +272,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_TrainingVideos_TrainingProgramId] ON [TrainingVideos] ([TrainingProgramId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -301,7 +280,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [IX_VideoProgresses_EmployeeId_TrainingVideoId] ON [VideoProgresses] ([EmployeeId], [TrainingVideoId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -310,7 +288,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_VideoProgresses_TrainingVideoId] ON [VideoProgresses] ([TrainingVideoId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -318,16 +295,13 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260825190828_InitialCreate', N'8.0.26');
+    VALUES (N'20260825190828_InitialCreate', N'10.0.13');
 END;
-GO
 
 COMMIT;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
@@ -348,82 +322,76 @@ BEGIN
     IF EXISTS (SELECT Email FROM Employees GROUP BY Email HAVING COUNT(*) > 1)
         THROW 51000, 'Migration blocked: duplicate employee email values exist.', 1;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
 )
 BEGIN
-    DECLARE @var0 sysname;
-    SELECT @var0 = [d].[name]
+    DECLARE @var nvarchar(max);
+    SELECT @var = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Employees]') AND [c].[name] = N'UserId');
-    IF @var0 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT [' + @var0 + '];');
+    IF @var IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT ' + @var + ';');
     ALTER TABLE [Employees] ALTER COLUMN [UserId] nvarchar(450) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
 )
 BEGIN
-    DECLARE @var1 sysname;
-    SELECT @var1 = [d].[name]
+    DECLARE @var1 nvarchar(max);
+    SELECT @var1 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Employees]') AND [c].[name] = N'LastName');
-    IF @var1 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT [' + @var1 + '];');
+    IF @var1 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT ' + @var1 + ';');
     ALTER TABLE [Employees] ALTER COLUMN [LastName] nvarchar(100) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
 )
 BEGIN
-    DECLARE @var2 sysname;
-    SELECT @var2 = [d].[name]
+    DECLARE @var2 nvarchar(max);
+    SELECT @var2 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Employees]') AND [c].[name] = N'FirstName');
-    IF @var2 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT [' + @var2 + '];');
+    IF @var2 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT ' + @var2 + ';');
     ALTER TABLE [Employees] ALTER COLUMN [FirstName] nvarchar(100) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
 )
 BEGIN
-    DECLARE @var3 sysname;
-    SELECT @var3 = [d].[name]
+    DECLARE @var3 nvarchar(max);
+    SELECT @var3 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Employees]') AND [c].[name] = N'EmployeeId');
-    IF @var3 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT [' + @var3 + '];');
+    IF @var3 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT ' + @var3 + ';');
     ALTER TABLE [Employees] ALTER COLUMN [EmployeeId] nvarchar(50) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
 )
 BEGIN
-    DECLARE @var4 sysname;
-    SELECT @var4 = [d].[name]
+    DECLARE @var4 nvarchar(max);
+    SELECT @var4 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Employees]') AND [c].[name] = N'Email');
-    IF @var4 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT [' + @var4 + '];');
+    IF @var4 IS NOT NULL EXEC(N'ALTER TABLE [Employees] DROP CONSTRAINT ' + @var4 + ';');
     ALTER TABLE [Employees] ALTER COLUMN [Email] nvarchar(256) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -432,37 +400,34 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [Employees] ADD [RowVersion] rowversion NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
 )
 BEGIN
-    DECLARE @var5 sysname;
-    SELECT @var5 = [d].[name]
+    DECLARE @var5 nvarchar(max);
+    SELECT @var5 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Departments]') AND [c].[name] = N'Name');
-    IF @var5 IS NOT NULL EXEC(N'ALTER TABLE [Departments] DROP CONSTRAINT [' + @var5 + '];');
+    IF @var5 IS NOT NULL EXEC(N'ALTER TABLE [Departments] DROP CONSTRAINT ' + @var5 + ';');
     ALTER TABLE [Departments] ALTER COLUMN [Name] nvarchar(100) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829171840_HardenEmployeeDepartmentFoundation'
 )
 BEGIN
-    DECLARE @var6 sysname;
-    SELECT @var6 = [d].[name]
+    DECLARE @var6 nvarchar(max);
+    SELECT @var6 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Departments]') AND [c].[name] = N'Description');
-    IF @var6 IS NOT NULL EXEC(N'ALTER TABLE [Departments] DROP CONSTRAINT [' + @var6 + '];');
+    IF @var6 IS NOT NULL EXEC(N'ALTER TABLE [Departments] DROP CONSTRAINT ' + @var6 + ';');
     ALTER TABLE [Departments] ALTER COLUMN [Description] nvarchar(500) NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -471,7 +436,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [Departments] ADD [RowVersion] rowversion NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -480,7 +444,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [IX_Employees_Email] ON [Employees] ([Email]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -489,7 +452,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [IX_Employees_EmployeeId] ON [Employees] ([EmployeeId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -497,16 +459,13 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260829171840_HardenEmployeeDepartmentFoundation', N'8.0.26');
+    VALUES (N'20260829171840_HardenEmployeeDepartmentFoundation', N'10.0.13');
 END;
-GO
 
 COMMIT;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829173754_AddTrainingManagementFoundation'
@@ -521,7 +480,6 @@ BEGIN
     IF EXISTS (SELECT EmployeeId, TrainingProgramId FROM TrainingAssignments GROUP BY EmployeeId, TrainingProgramId HAVING COUNT(*) > 1)
         THROW 51000, 'Migration blocked: duplicate employee training assignments exist.', 1;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -530,7 +488,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [Quizzes] DROP CONSTRAINT [FK_Quizzes_TrainingPrograms_TrainingProgramId];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -539,7 +496,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingAssignments] DROP CONSTRAINT [FK_TrainingAssignments_Employees_EmployeeId];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -548,7 +504,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingAssignments] DROP CONSTRAINT [FK_TrainingAssignments_TrainingPrograms_TrainingProgramId];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -557,7 +512,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingVideos] DROP CONSTRAINT [FK_TrainingVideos_TrainingPrograms_TrainingProgramId];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -566,7 +520,6 @@ IF NOT EXISTS (
 BEGIN
     DROP INDEX [IX_TrainingVideos_TrainingProgramId] ON [TrainingVideos];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -575,52 +528,48 @@ IF NOT EXISTS (
 BEGIN
     DROP INDEX [IX_TrainingAssignments_EmployeeId] ON [TrainingAssignments];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829173754_AddTrainingManagementFoundation'
 )
 BEGIN
-    DECLARE @var7 sysname;
-    SELECT @var7 = [d].[name]
+    DECLARE @var7 nvarchar(max);
+    SELECT @var7 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[TrainingVideos]') AND [c].[name] = N'VideoUrl');
-    IF @var7 IS NOT NULL EXEC(N'ALTER TABLE [TrainingVideos] DROP CONSTRAINT [' + @var7 + '];');
+    IF @var7 IS NOT NULL EXEC(N'ALTER TABLE [TrainingVideos] DROP CONSTRAINT ' + @var7 + ';');
     ALTER TABLE [TrainingVideos] ALTER COLUMN [VideoUrl] nvarchar(2048) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829173754_AddTrainingManagementFoundation'
 )
 BEGIN
-    DECLARE @var8 sysname;
-    SELECT @var8 = [d].[name]
+    DECLARE @var8 nvarchar(max);
+    SELECT @var8 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[TrainingVideos]') AND [c].[name] = N'Title');
-    IF @var8 IS NOT NULL EXEC(N'ALTER TABLE [TrainingVideos] DROP CONSTRAINT [' + @var8 + '];');
+    IF @var8 IS NOT NULL EXEC(N'ALTER TABLE [TrainingVideos] DROP CONSTRAINT ' + @var8 + ';');
     ALTER TABLE [TrainingVideos] ALTER COLUMN [Title] nvarchar(200) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829173754_AddTrainingManagementFoundation'
 )
 BEGIN
-    DECLARE @var9 sysname;
-    SELECT @var9 = [d].[name]
+    DECLARE @var9 nvarchar(max);
+    SELECT @var9 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[TrainingVideos]') AND [c].[name] = N'Description');
-    IF @var9 IS NOT NULL EXEC(N'ALTER TABLE [TrainingVideos] DROP CONSTRAINT [' + @var9 + '];');
+    IF @var9 IS NOT NULL EXEC(N'ALTER TABLE [TrainingVideos] DROP CONSTRAINT ' + @var9 + ';');
     ALTER TABLE [TrainingVideos] ALTER COLUMN [Description] nvarchar(2000) NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -629,37 +578,34 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingVideos] ADD [RowVersion] rowversion NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829173754_AddTrainingManagementFoundation'
 )
 BEGIN
-    DECLARE @var10 sysname;
-    SELECT @var10 = [d].[name]
+    DECLARE @var10 nvarchar(max);
+    SELECT @var10 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[TrainingPrograms]') AND [c].[name] = N'Title');
-    IF @var10 IS NOT NULL EXEC(N'ALTER TABLE [TrainingPrograms] DROP CONSTRAINT [' + @var10 + '];');
+    IF @var10 IS NOT NULL EXEC(N'ALTER TABLE [TrainingPrograms] DROP CONSTRAINT ' + @var10 + ';');
     ALTER TABLE [TrainingPrograms] ALTER COLUMN [Title] nvarchar(200) NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260829173754_AddTrainingManagementFoundation'
 )
 BEGIN
-    DECLARE @var11 sysname;
-    SELECT @var11 = [d].[name]
+    DECLARE @var11 nvarchar(max);
+    SELECT @var11 = QUOTENAME([d].[name])
     FROM [sys].[default_constraints] [d]
     INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
     WHERE ([d].[parent_object_id] = OBJECT_ID(N'[TrainingPrograms]') AND [c].[name] = N'Description');
-    IF @var11 IS NOT NULL EXEC(N'ALTER TABLE [TrainingPrograms] DROP CONSTRAINT [' + @var11 + '];');
+    IF @var11 IS NOT NULL EXEC(N'ALTER TABLE [TrainingPrograms] DROP CONSTRAINT ' + @var11 + ';');
     ALTER TABLE [TrainingPrograms] ALTER COLUMN [Description] nvarchar(2000) NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -668,7 +614,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingPrograms] ADD [RowVersion] rowversion NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -677,7 +622,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingAssignments] ADD [RowVersion] rowversion NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -686,7 +630,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [IX_TrainingVideos_TrainingProgramId_SequenceOrder] ON [TrainingVideos] ([TrainingProgramId], [SequenceOrder]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -695,7 +638,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [IX_TrainingAssignments_EmployeeId_TrainingProgramId] ON [TrainingAssignments] ([EmployeeId], [TrainingProgramId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -704,7 +646,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [Quizzes] ADD CONSTRAINT [FK_Quizzes_TrainingPrograms_TrainingProgramId] FOREIGN KEY ([TrainingProgramId]) REFERENCES [TrainingPrograms] ([Id]) ON DELETE NO ACTION;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -713,7 +654,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingAssignments] ADD CONSTRAINT [FK_TrainingAssignments_Employees_EmployeeId] FOREIGN KEY ([EmployeeId]) REFERENCES [Employees] ([Id]) ON DELETE NO ACTION;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -722,7 +662,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingAssignments] ADD CONSTRAINT [FK_TrainingAssignments_TrainingPrograms_TrainingProgramId] FOREIGN KEY ([TrainingProgramId]) REFERENCES [TrainingPrograms] ([Id]) ON DELETE NO ACTION;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -731,7 +670,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingVideos] ADD CONSTRAINT [FK_TrainingVideos_TrainingPrograms_TrainingProgramId] FOREIGN KEY ([TrainingProgramId]) REFERENCES [TrainingPrograms] ([Id]) ON DELETE NO ACTION;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -739,16 +677,13 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260829173754_AddTrainingManagementFoundation', N'8.0.26');
+    VALUES (N'20260829173754_AddTrainingManagementFoundation', N'10.0.13');
 END;
-GO
 
 COMMIT;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260831181446_AddVideoDurationForPlaybackValidation'
@@ -756,7 +691,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingVideos] ADD [DurationSeconds] int NOT NULL DEFAULT 0;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -764,16 +698,13 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260831181446_AddVideoDurationForPlaybackValidation', N'8.0.26');
+    VALUES (N'20260831181446_AddVideoDurationForPlaybackValidation', N'10.0.13');
 END;
-GO
 
 COMMIT;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260901181951_AddQuizAssessmentWorkflow'
@@ -781,7 +712,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] DROP CONSTRAINT [FK_QuizResults_Employees_EmployeeId];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -790,7 +720,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] DROP CONSTRAINT [FK_QuizResults_Quizzes_QuizId];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -799,7 +728,6 @@ IF NOT EXISTS (
 BEGIN
     DROP INDEX [IX_QuizResults_EmployeeId] ON [QuizResults];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -808,7 +736,6 @@ IF NOT EXISTS (
 BEGIN
     DROP INDEX [IX_QuizQuestions_QuizId] ON [QuizQuestions];
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -817,7 +744,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [Quizzes] ADD [IsActive] bit NOT NULL DEFAULT CAST(1 AS bit);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -826,7 +752,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] ADD [CompletedAt] datetime2 NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -835,7 +760,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] ADD [IsCompleted] bit NOT NULL DEFAULT CAST(1 AS bit);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -844,7 +768,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_QuizResults_EmployeeId_QuizId_IsCompleted] ON [QuizResults] ([EmployeeId], [QuizId], [IsCompleted]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -853,7 +776,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [IX_QuizQuestions_QuizId_SequenceOrder] ON [QuizQuestions] ([QuizId], [SequenceOrder]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -862,7 +784,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] ADD CONSTRAINT [FK_QuizResults_Employees_EmployeeId] FOREIGN KEY ([EmployeeId]) REFERENCES [Employees] ([Id]) ON DELETE NO ACTION;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -871,7 +792,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] ADD CONSTRAINT [FK_QuizResults_Quizzes_QuizId] FOREIGN KEY ([QuizId]) REFERENCES [Quizzes] ([Id]) ON DELETE NO ACTION;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -879,16 +799,13 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260901181951_AddQuizAssessmentWorkflow', N'8.0.26');
+    VALUES (N'20260901181951_AddQuizAssessmentWorkflow', N'10.0.13');
 END;
-GO
 
 COMMIT;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260908174708_AddEligibilityAndPlaybackCompliance'
@@ -896,7 +813,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [VideoProgresses] ADD [PlaybackCreditSeconds] float NOT NULL DEFAULT 0.0E0;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -905,7 +821,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [VideoProgresses] ADD [PlaybackState] nvarchar(max) NOT NULL DEFAULT N'paused';
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -914,7 +829,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [VideoProgresses] ADD [RowVersion] rowversion NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -923,7 +837,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [Employees] ADD [WorkerType] nvarchar(30) NOT NULL DEFAULT N'Unknown';
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -932,7 +845,6 @@ IF NOT EXISTS (
 BEGIN
     UPDATE p SET IsCompleted = 0 FROM VideoProgresses p INNER JOIN TrainingVideos v ON v.Id = p.TrainingVideoId WHERE p.CurrentPositionSeconds < v.DurationSeconds;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -940,16 +852,13 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260908174708_AddEligibilityAndPlaybackCompliance', N'8.0.26');
+    VALUES (N'20260908174708_AddEligibilityAndPlaybackCompliance', N'10.0.13');
 END;
-GO
 
 COMMIT;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260908175134_ProtectAssessmentHistory'
@@ -957,7 +866,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] ADD [RowVersion] rowversion NOT NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -966,7 +874,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [QuizResults] ADD [SubmittedAnswersJson] nvarchar(max) NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -975,7 +882,6 @@ IF NOT EXISTS (
 BEGIN
     EXEC(N'CREATE UNIQUE INDEX [IX_QuizResults_EmployeeId] ON [QuizResults] ([EmployeeId]) WHERE [IsCompleted] = 0');
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -983,16 +889,13 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260908175134_ProtectAssessmentHistory', N'8.0.26');
+    VALUES (N'20260908175134_ProtectAssessmentHistory', N'10.0.13');
 END;
-GO
 
 COMMIT;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260910180615_AddProgramExamUnlockCondition'
@@ -1000,7 +903,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingPrograms] ADD [ExamUnlockCondition] int NOT NULL DEFAULT 0;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -1009,7 +911,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingPrograms] ADD [ExamUnlockVideoId] int NULL;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -1018,7 +919,6 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX [IX_TrainingPrograms_ExamUnlockVideoId] ON [TrainingPrograms] ([ExamUnlockVideoId]);
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -1027,7 +927,6 @@ IF NOT EXISTS (
 BEGIN
     EXEC(N'ALTER TABLE [TrainingPrograms] ADD CONSTRAINT [CK_TrainingPrograms_ExamUnlock] CHECK (([ExamUnlockCondition] = 0 AND [ExamUnlockVideoId] IS NULL) OR ([ExamUnlockCondition] = 1 AND [ExamUnlockVideoId] IS NOT NULL))');
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -1036,7 +935,6 @@ IF NOT EXISTS (
 BEGIN
     ALTER TABLE [TrainingPrograms] ADD CONSTRAINT [FK_TrainingPrograms_TrainingVideos_ExamUnlockVideoId] FOREIGN KEY ([ExamUnlockVideoId]) REFERENCES [TrainingVideos] ([Id]) ON DELETE NO ACTION;
 END;
-GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
@@ -1044,9 +942,82 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260910180615_AddProgramExamUnlockCondition', N'8.0.26');
+    VALUES (N'20260910180615_AddProgramExamUnlockCondition', N'10.0.13');
 END;
+
+COMMIT;
 GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013173443_AddTypedAnswerReview'
+)
+BEGIN
+    ALTER TABLE [QuizResults] ADD [ManualMarksJson] nvarchar(max) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013173443_AddTypedAnswerReview'
+)
+BEGIN
+    ALTER TABLE [QuizResults] ADD [RequiresReview] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013173443_AddTypedAnswerReview'
+)
+BEGIN
+    ALTER TABLE [QuizResults] ADD [ReviewedAt] datetime2 NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013173443_AddTypedAnswerReview'
+)
+BEGIN
+    ALTER TABLE [QuizResults] ADD [ReviewedBy] nvarchar(max) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013173443_AddTypedAnswerReview'
+)
+BEGIN
+    ALTER TABLE [QuizQuestions] ADD [IsTypedAnswer] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013173443_AddTypedAnswerReview'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261013173443_AddTypedAnswerReview', N'10.0.13');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013183446_PersistShuffledQuestionOrder'
+)
+BEGIN
+    ALTER TABLE [QuizResults] ADD [QuestionOrderJson] nvarchar(max) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261013183446_PersistShuffledQuestionOrder'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261013183446_PersistShuffledQuestionOrder', N'10.0.13');
+END;
 
 COMMIT;
 GO

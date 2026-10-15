@@ -42,7 +42,7 @@ public sealed class TrainingController : Controller
         {
             IdentityStatus = resolution.Status,
             ExamResults = resolution.Status == EmployeeIdentityResolutionStatus.Resolved
-                ? (await _quizzes.GetEmployeeExamsAsync(resolution.Employee!.Id)).Where(x=>x.Results.Count>0 && !x.ActiveAttemptId.HasValue).ToDictionary(x=>x.TrainingProgramId,x=>x.Results[0])
+                ? (await _quizzes.GetEmployeeExamsAsync(resolution.Employee!.Id)).Where(x=>x.BestResult != null).ToDictionary(x=>x.TrainingProgramId,x=>x.BestResult!)
                 : new Dictionary<int,QuizResultDto>(),
             EmployeeName = resolution.Employee == null ? null : $"{resolution.Employee.FirstName} {resolution.Employee.LastName}",
             Assignments = training

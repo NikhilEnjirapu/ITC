@@ -1,0 +1,48 @@
+@model ITC.TrainingPortal.Application.DTOs.TrainingAssignmentDto
+@using ITC.TrainingPortal.Application.DTOs
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var directory = (IReadOnlyList<EmployeeDto>)ViewBag.EmployeeDirectory;
+    var options = ((IEnumerable<SelectListItem>)ViewBag.Employees).ToDictionary(x => x.Value);
+    var csv = Context.Request.HasFormContentType && Context.Request.Form["selectionMode"] == "csv";
+}
+<fieldset class="mb-4" id="employee-picker">
+    <legend class="h5">Choose employees</legend>
+    <div class="d-flex gap-3 mb-3">
+        <label><input type="radio" name="selectionMode" value="filter" checked="@(!csv)"/> Filter and select</label>
+        <label><input type="radio" name="selectionMode" value="csv" checked="@csv"/> Upload CSV</label>
+    </div>
+    <div id="employee-filter-panel">
+        <div class="row g-3 mb-3">
+            <div class="col-md-5"><label for="employee-department" class="form-label">Department</label><select id="employee-department" class="form-select"><option value="">All departments</option>
+            @foreach(var department in directory.GroupBy(x => x.DepartmentId).OrderBy(x => x.First().DepartmentName)){
+                <option value="@department.Key">@department.First().DepartmentName</option>
+            }
+            </select></div>
+            <div class="col-md-7"><label for="employee-search" class="form-label">Search employees</label><input id="employee-search" type="search" class="form-control" placeholder="Name or employee ID"/></div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+            <button type="button" id="employee-select-matching" class="btn btn-outline-primary btn-sm">Select all matching employees</button>
+            <button type="button" id="employee-clear" class="btn btn-outline-secondary btn-sm">Clear selection</button>
+            <span id="employee-selection-count" role="status" aria-live="polite"></span>
+        </div>
+        <p class="form-text">Select up to 1,000 employees. Selections stay selected when you change filters. Already assigned employees are skipped in the preview.</p>
+        <div class="border rounded p-2" style="max-height: 320px; overflow-y: auto;">
+        @foreach(var employee in directory.OrderBy(x => x.EmployeeId)){
+            var option = options[employee.Id.ToString()];
+            <label class="d-block border-bottom p-2 employee-option" data-department="@employee.DepartmentId" data-search="@($"{employee.EmployeeId} {employee.FirstName} {employee.LastName}".ToLowerInvariant())">
+                <input type="checkbox" name="employeeIds" value="@employee.Id" checked="@option.Selected" disabled="@option.Disabled"/>
+                <strong>@employee.EmployeeId</strong> — @employee.FirstName @employee.LastName <span class="text-muted">(@employee.DepartmentName)</span>
+                @if(option.Disabled){<span class="text-muted"> — Not eligible</span>}
+            </label>
+        }
+        <p id="employee-no-matches" hidden>No employees match these filters.</p>
+        </div>
+    </div>
+    <div id="employee-csv-panel">
+        <label for="csvFile" class="form-label">Employee CSV</label>
+        <input type="file" id="csvFile" name="csvFile" accept=".csv,text/csv" class="form-control"/>
+        <p class="form-text">Use an EmployeeId column with one existing employee ID per row. Maximum 1,000 rows and 128 KB. Preserve leading zeros when exporting from Excel. Uploaded files are used only to prepare this assignment.</p>
+        <a asp-action="CsvTemplate">Download CSV template</a>
+    </div>
+</fieldset>

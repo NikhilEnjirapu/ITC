@@ -1,0 +1,18 @@
+@model ITC.TrainingPortal.Web.Services.AssignmentPreview
+@{ ViewData["Title"] = "Review assignment";
+   var ready = Model.Employees.Count(x => x.SkipReason == null);
+}
+<div class="page-header"><div><h1>Review assignment</h1><p>@Model.Program</p></div></div>
+<section class="content-card p-4">
+    <p><strong>@ready ready to assign</strong> · @(Model.Employees.Count - ready) skipped</p>
+    <p>Assigned on: @Model.AssignedAt.ToString("dd MMM yyyy hh:mm tt") IST<br/>Due by: @(Model.DueDate?.ToString("dd MMM yyyy hh:mm tt") ?? "No deadline")@(Model.DueDate.HasValue ? " IST" : "")</p>
+    <div class="table-responsive"><table class="table"><thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Outcome</th></tr></thead><tbody>
+    @foreach(var row in Model.Employees){
+        <tr><td>@row.EmployeeId</td><td>@row.Name</td><td>@row.Department</td><td>@(row.SkipReason ?? "Ready to assign")</td></tr>
+    }
+    </tbody></table></div>
+    @if(ready > 0){
+        <p>Confirm within 30 minutes. Eligibility and existing assignments are checked again when saving.</p>
+        <form asp-action="Confirm" method="post"><input type="hidden" name="token" value="@Model.Token"/><button class="btn btn-primary">Confirm assignment to @ready employee(s)</button> <a asp-action="Create" class="btn btn-outline-secondary">Change selection</a></form>
+    }else{<p>No new assignments can be made from this selection.</p><a asp-action="Create" class="btn btn-outline-primary">Change selection</a>}
+</section>

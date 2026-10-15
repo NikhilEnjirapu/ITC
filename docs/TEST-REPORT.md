@@ -1,5 +1,15 @@
 # Validation report
 
+## .NET 10 upgrade verification - 2026-10-13
+
+- SDK 10.0.401; runtime and EF Core 10.0.12. NuGet restore succeeded.
+- Debug build and all 202 .NET tests passed; no tests skipped. Evidence: artifacts/test-results/net10-upgrade.trx.
+- Release publish succeeded at artifacts/publish-net10.
+- Published application started under Production locally; /login and /privacy returned HTTP 200. This is not target IIS or live Entra acceptance.
+- EF 10 reported no pending model changes and generated the idempotent deployment SQL; the SQL was not executed.
+- Typed-answer and mixed-exam HTTP tests cover authoring, submission, pending reports, administrator review, final scores, anti-forgery, employee access restrictions and duplicate review prevention.
+
+
 ## Release verification — 2026-10-11
 
 - Solution build: 0 warnings, 0 errors (Debug and Release).
@@ -15,7 +25,7 @@
 - .NET tests: 194 passed, 0 failed, 0 skipped. Evidence included at validation/release-20260921.trx in the ZIP.
 - JavaScript playback tests: 2 passed, 0 failed.
 - Deployment SQL regenerated with all eight migrations, including AddProgramExamUnlockCondition. Not executed against a fresh/client database.
-- Prior local authenticated HTTP audit passed main admin/employee pages and Excel/PDF responses. This is not target IIS or corporate SSO acceptance.
+- Prior local authenticated HTTP audit passed main admin/employee pages and CSV responses. This is not target IIS or corporate SSO acceptance.
 - See RELEASE-NOTES.md for known application issues and outstanding acceptance checks.
 
 ## Historical validation — September 8
@@ -27,11 +37,11 @@ Date: 2026-09-08. Environment: local Windows, .NET SDK 8.0.424.
 - Solution build succeeded with no compiler warnings/errors.
 - Automated suite: 95 passed, 0 failed, 0 skipped. Evidence: artifacts/test-results/compliance-tests.trx.
 - Existing tests cover authentication/role foundations, route separation, employee/department and training management, assignment boundaries, viewing and quiz workflows.
-- Added tests cover mandatory T/S and worker-category exclusions, all configurable rule types and deactivation, request denial/auditing, existing-session revocation, audit actor/value persistence, full-duration completion, pause saving, idle/paused manipulation rejection, consolidated completion/filtering, Open XML literal-string safety and multi-page PDF parsing.
+- Added tests cover mandatory T/S and worker-category exclusions, all configurable rule types and deactivation, request denial/auditing, existing-session revocation, audit actor/value persistence, full-duration completion, pause saving, idle/paused manipulation rejection, consolidated completion/filtering, UTF-8 CSV output and spreadsheet formula-injection protection.
 - Release publish succeeded and generated an IIS AspNetCoreModuleV2 in-process web.config.
 - Idempotent SQL migration script generated and inspected for worker category, progress reset, assessment history and active-attempt uniqueness changes. It was not executed against the project database.
 - JavaScript syntax check passed.
-- Published-app HTTP smoke: /login returned 200; anonymous requests to /admin, /employee/training, /employee/media/1 and /admin/reports/Excel redirected to login. This was a local Kestrel check, not an IIS or authenticated UAT run.
+- Published-app HTTP smoke: /login returned 200; anonymous requests to /admin, /employee/training, /employee/media/1 and /admin/reports/Csv redirected to login. This was a local Kestrel check, not an IIS or authenticated UAT run.
 - The sandbox initially denied data-protection key writes. After adding a configurable DataProtection:KeyPath and running the local smoke process with reviewed permissions, Windows DPAPI key creation and startup succeeded. HTTP evidence is in artifacts/test-results/http-smoke.json. Installation instructions require creating and granting access to the selected key directory under the deployed service identity.
 
 ## Client acceptance still required
@@ -46,7 +56,7 @@ Date: 2026-09-08. Environment: local Windows, .NET SDK 8.0.424.
 | Start exam with video already open | Standard player stops; new content requests blocked | Pending browser/UAT |
 | Correct/incorrect answers and repeated submission | Server score/pass-fail, preserved answers, no duplicate completion | Pending SQL/browser UAT |
 | Concurrent playback and quiz start | SQL rowversion/unique index enforce consistency | Pending SQL Server integration |
-| Excel/PDF filtered exports including workforce languages | Correct data and readable font rendering | Pending client acceptance |
+| CSV filtered export including workforce languages | Correct data and readable Unicode text | Pending client acceptance |
 | App-pool restart and backup/restore | Persistent progress, keys and audit history | Pending IIS deployment |
 | Expected employee count / concurrent users / long videos | Acceptable performance | Pending load test |
 

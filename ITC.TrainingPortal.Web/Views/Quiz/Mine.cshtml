@@ -1,9 +1,20 @@
 @model IReadOnlyList<ITC.TrainingPortal.Application.DTOs.ExamAccessDto>
-@{ViewData["Title"]="Exams";}<div class="page-header"><div><div class="eyebrow">Assessments</div><h1>My exams</h1></div></div>
-@if(TempData["QuizMessage"] is string message){<div class="alert alert-warning">@message</div>}
-@foreach(var exam in Model){<section class="content-card learning-panel mb-3"><div class="d-flex justify-content-between align-items-start"><div><div class="eyebrow">@exam.TrainingProgramTitle</div><h2 class="h4">@exam.QuizTitle</h2><p>@exam.QuestionCount questions · @(exam.Results.Count>0 ? "Completed" : !exam.IsActive ? "Inactive" : exam.IsUnlocked?"Unlocked":"Locked")</p></div>@if(exam.Results.Count > 0 && !exam.ActiveAttemptId.HasValue){<a asp-action="Result" asp-route-id="@exam.Results[0].Id" class="btn btn-primary">View result</a>}else{<a asp-action="Introduction" asp-route-id="@exam.QuizId" class="btn @(exam.IsUnlocked?"btn-primary":"btn-outline-secondary")">@(exam.ActiveAttemptId.HasValue?"Resume exam":exam.IsUnlocked && exam.IsActive?"Start Exam":"View exam")</a>}</div>
-@if(!exam.IsUnlocked && exam.Results.Count==0){<div class="alert alert-light mb-0">@exam.UnlockMessage</div>}
-@if(exam.Results.Count>0){<hr/><h3 class="h6">Previous attempts</h3>@foreach(var result in exam.Results){<a asp-action="Result" asp-route-id="@result.Id" class="d-block">@result.AttemptDate.ToLocalTime().ToString("g") — @result.ScorePercentage% — @(result.IsPassed?"Passed":"Failed")</a>}}</section>}
-@if(Model.Count==0){<section class="content-card learning-panel"><p class="text-muted mb-0">No pending exams. Completed exams are available in Results.</p></section>}
-
+@{ ViewData["Title"] = "Exams"; }
+<div class="page-header"><div><div class="eyebrow">Assessments</div><h1>My exams</h1></div></div>
+@if (TempData["QuizMessage"] is string message) { <div class="alert alert-warning">@message</div> }
+@foreach (var exam in Model)
+{
+    <section class="content-card learning-panel mb-3">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div><div class="eyebrow">@exam.TrainingProgramTitle</div><h2 class="h4">@exam.QuizTitle</h2>
+                <p>@exam.QuestionCount questions · @exam.AttemptCount of @ITC.TrainingPortal.Application.DTOs.ExamAccessDto.MaximumAttempts attempts used</p>
+                @if (exam.BestResult is { } best) { <p class="mb-0"><strong>Best score:</strong> @best.Outcome</p> }
+            </div>
+            <a asp-action="Introduction" asp-route-id="@exam.QuizId" class="btn @(exam.IsUnlocked && exam.IsActive && (exam.ActiveAttemptId.HasValue || exam.HasAttemptsRemaining) ? "btn-primary" : "btn-outline-secondary")">@(exam.ActiveAttemptId.HasValue ? "Resume exam" : exam.HasAttemptsRemaining && exam.IsUnlocked && exam.IsActive ? exam.AttemptCount > 0 ? "Take again" : "Start exam" : "View exam")</a>
+        </div>
+        @if (!exam.IsUnlocked && exam.Results.Count == 0) { <div class="alert alert-light mb-0">@exam.UnlockMessage</div> }
+        @if (exam.Results.Count > 0) { <hr/><h3 class="h6">Previous attempts</h3>@foreach (var result in exam.Results) { <a asp-action="Result" asp-route-id="@result.Id" class="d-block">@result.AttemptDate.ToLocalTime().ToString("g") — @result.Outcome</a> } }
+    </section>
+}
+@if (Model.Count == 0) { <section class="content-card learning-panel"><p class="text-muted mb-0">No exams are assigned.</p></section> }
 <a asp-action="Results" class="btn btn-outline-primary">View results</a>

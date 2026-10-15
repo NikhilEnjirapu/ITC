@@ -1,3 +1,27 @@
+# Question shuffling - 2026-10-14
+
+- Each new exam attempt receives an independently shuffled question sequence.
+- The sequence is stored with the attempt, so refresh and resume do not reorder questions.
+- Scoring and manual review continue to use question IDs; administrator review follows the employee's saved sequence.
+- Apply the updated `deployment/Database.sql` before deployment (`PersistShuffledQuestionOrder`).
+
+# .NET 10 upgrade - 2026-10-13
+
+- All five projects now target .NET 10. SDK selection is pinned to 10.0.401 with servicing patch roll-forward.
+- EF Core, ASP.NET Core MVC testing and the local EF tool use 10.0.12; Serilog.AspNetCore uses 10.0.0.
+- Updated the isolated HTTP test host to remove the retained EF provider configuration before registering its in-memory database.
+- EF reports no pending model changes. Deployment SQL was regenerated with EF 10; no database was changed.
+- New Release output: artifacts/publish-net10. Prior release archives remain unchanged.
+- IIS requires the .NET 10 Hosting Bundle. See INSTALLATION.md before deployment.
+
+# Typed-answer feature - 2026-10-13
+
+- Exams support multiple-choice and manually reviewed typed-answer questions in the same exam.
+- Submitted descriptive answers show Awaiting review until an administrator publishes correct/incorrect marks; each question carries one point.
+- Review identity, timestamp and marks are persisted. Pending results do not count as passed in compliance reports.
+- Apply the updated deployment/Database.sql before deploying this source. The AddTypedAnswerReview migration preserves existing question formats and results.
+- This source update does not rebuild the October 11 release archives or apply changes to a live database.
+
 # Client review package — 2026-10-11
 
 This package is rebuilt from the current source and replaces the September 21 archive. No database changes: Database.sql and the eight migrations are unchanged, so no upgrade script needs to be applied for this release.

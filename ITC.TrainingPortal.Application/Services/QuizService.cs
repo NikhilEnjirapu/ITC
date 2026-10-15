@@ -2,6 +2,8 @@ using ITC.TrainingPortal.Application.DTOs;
 using ITC.TrainingPortal.Application.Interfaces;
 using ITC.TrainingPortal.Domain.Entities;
 using ITC.TrainingPortal.Domain.Interfaces;
+using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace ITC.TrainingPortal.Application.Services;
 
@@ -89,8 +91,9 @@ public sealed class QuizService : IQuizService
         var q = await _questions.GetByIdAsync(dto.Id) ?? throw new InvalidOperationException("Question does not exist.");
         if (q.QuizId != dto.QuizId) throw new InvalidOperationException("A question cannot be moved to another exam.");
         await EnsureQuestionsEditableAsync(q.QuizId);
-        q.QuestionText = dto.QuestionText.Trim(); q.OptionA = dto.OptionA.Trim(); q.OptionB = dto.OptionB.Trim();
-        q.OptionC = dto.OptionC.Trim(); q.OptionD = dto.OptionD.Trim(); q.CorrectOption = dto.CorrectOption.ToUpperInvariant();
+        q.IsTypedAnswer = dto.IsTypedAnswer;
+        q.QuestionText = dto.QuestionText.Trim(); q.OptionA = dto.OptionA?.Trim() ?? ""; q.OptionB = dto.OptionB?.Trim() ?? "";
+        q.OptionC = dto.OptionC?.Trim() ?? ""; q.OptionD = dto.OptionD?.Trim() ?? ""; q.CorrectOption = dto.CorrectOption?.ToUpperInvariant() ?? "";
         q.SequenceOrder = dto.SequenceOrder; q.UpdatedAt = DateTime.UtcNow;
         _questions.Update(q); await _questions.SaveChangesAsync();
     }
@@ -140,8 +143,8 @@ public sealed class QuizService : IQuizService
     public async Task<ExamAttemptDto> StartOrResumeAsync(int employeeId, int quizId)
     {
         var access = await GetAccessAsync(employeeId, quizId) ?? throw new UnauthorizedAccessException();
-        if (access.Results.Count > 0 && !access.ActiveAttemptId.HasValue)
-            throw new InvalidOperationException("This exam has already been completed. View your saved result.");
+        if (!access.ActiveAttemptId.HasValue && !access.HasAttemptsRemaining)
+            throw new InvalidOperationException($"You have used all {ExamAccessDto.MaximumAttempts} attempts for this exam.");
         if (!access.IsActive) throw new InvalidOperationException("This exam is not active.");
         if (!access.IsUnlocked) throw new InvalidOperationException(access.UnlockMessage);
         var questions = (await _questions.FindAsync(x => x.QuizId == quizId)).OrderBy(x => x.SequenceOrder).ToList();
@@ -152,13 +155,22 @@ public sealed class QuizService : IQuizService
             if (await HasActiveAttemptAsync(employeeId)) throw new InvalidOperationException("Finish your active exam before starting another exam.");
             attempt = new QuizResult { EmployeeId = employeeId, QuizId = quizId, AttemptDate = DateTime.UtcNow };
             await _results.AddAsync(attempt); await _results.SaveChangesAsync();
+            attempt.QuestionOrderJson = await CreateQuestionOrderAsync(quizId, questions.Select(x => x.Id).ToList());
+            _results.Update(attempt); await _results.SaveChangesAsync();
         }
+        else if (string.IsNullOrWhiteSpace(attempt.QuestionOrderJson))
+        {
+            // Existing active attempts created before shuffling receive one stable order on first resume.
+            attempt.QuestionOrderJson = await CreateQuestionOrderAsync(quizId, questions.Select(x => x.Id).ToList());
+            _results.Update(attempt); await _results.SaveChangesAsync();
+        }
+        questions = ApplyQuestionOrder(questions, attempt.QuestionOrderJson);
         return new ExamAttemptDto { QuizId = access.QuizId, QuizTitle = access.QuizTitle,
             TrainingProgramId = access.TrainingProgramId, TrainingProgramTitle = access.TrainingProgramTitle,
             IsUnlocked = true, IsActive = true, QuestionCount = questions.Count, AttemptId = attempt.Id,
             ActiveAttemptId = attempt.Id, Results = access.Results,
-            Questions = questions.Select(x => new ExamQuestionDto { Id = x.Id, SequenceOrder = x.SequenceOrder,
-                QuestionText = x.QuestionText, Options = new Dictionary<string, string> { ["A"] = x.OptionA, ["B"] = x.OptionB, ["C"] = x.OptionC, ["D"] = x.OptionD } }).ToList() };
+            Questions = questions.Select((x, index) => new ExamQuestionDto { Id = x.Id, SequenceOrder = index + 1, IsTypedAnswer = x.IsTypedAnswer,
+                QuestionText = x.QuestionText, Options = x.IsTypedAnswer ? new Dictionary<string, string>() : new Dictionary<string, string> { ["A"] = x.OptionA, ["B"] = x.OptionB, ["C"] = x.OptionC, ["D"] = x.OptionD } }).ToList() };
     }
 
     public async Task<QuizResultDto> SubmitAsync(int employeeId, ExamSubmissionDto submission)
@@ -167,12 +179,13 @@ public sealed class QuizService : IQuizService
         if (attempt == null || attempt.EmployeeId != employeeId) throw new UnauthorizedAccessException();
         if (attempt.IsCompleted) throw new InvalidOperationException("This exam attempt has already been submitted.");
         var questions = (await _questions.FindAsync(x => x.QuizId == attempt.QuizId)).ToList();
-        if (questions.Count == 0 || questions.Any(x => !submission.Answers.TryGetValue(x.Id, out var answer) || string.IsNullOrEmpty(answer) || answer.Length != 1 || !"ABCD".Contains(answer.ToUpperInvariant())))
-            throw new InvalidOperationException("Answer every question before submitting the exam.");
-        var correct = questions.Count(x => string.Equals(x.CorrectOption, submission.Answers[x.Id], StringComparison.OrdinalIgnoreCase));
+        if (questions.Count == 0 || questions.Any(x => !submission.Answers.TryGetValue(x.Id, out var answer) || string.IsNullOrWhiteSpace(answer) || (x.IsTypedAnswer ? answer.Length > 5000 : answer.Length != 1 || !"ABCD".Contains(answer.ToUpperInvariant()))))
+            throw new InvalidOperationException("Answer every question before submitting the exam. Typed answers must be no longer than 5,000 characters.");
+        var correct = questions.Count(x => !x.IsTypedAnswer && string.Equals(x.CorrectOption, submission.Answers[x.Id], StringComparison.OrdinalIgnoreCase));
         var quiz = await _quizzes.GetByIdAsync(attempt.QuizId) ?? throw new InvalidOperationException("Exam does not exist.");
         attempt.ScorePercentage = (int)Math.Round(correct * 100d / questions.Count, MidpointRounding.AwayFromZero);
-        attempt.IsPassed = attempt.ScorePercentage >= quiz.PassingScorePercentage; attempt.IsCompleted = true;
+        attempt.RequiresReview = questions.Any(x => x.IsTypedAnswer);
+        attempt.IsPassed = !attempt.RequiresReview && attempt.ScorePercentage >= quiz.PassingScorePercentage; attempt.IsCompleted = true;
         attempt.CompletedAt = DateTime.UtcNow; attempt.UpdatedAt = DateTime.UtcNow;
         attempt.SubmittedAnswersJson = System.Text.Json.JsonSerializer.Serialize(submission.Answers);
         _results.Update(attempt); await _results.SaveChangesAsync();
@@ -189,6 +202,38 @@ public sealed class QuizService : IQuizService
 
     public Task<bool> HasActiveAttemptAsync(int employeeId) => _results.AnyAsync(x => x.EmployeeId == employeeId && !x.IsCompleted);
 
+    private async Task<string> CreateQuestionOrderAsync(int quizId, List<int> questionIds)
+    {
+        if (questionIds.Count < 2) return JsonSerializer.Serialize(questionIds);
+        var used = (await _results.FindAsync(x => x.QuizId == quizId))
+            .Select(x => x.QuestionOrderJson).Where(x => !string.IsNullOrWhiteSpace(x)).ToHashSet(StringComparer.Ordinal);
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            var shuffled = questionIds.ToList();
+            for (var i = shuffled.Count - 1; i > 0; i--)
+            {
+                var swap = RandomNumberGenerator.GetInt32(i + 1);
+                (shuffled[i], shuffled[swap]) = (shuffled[swap], shuffled[i]);
+            }
+            var json = JsonSerializer.Serialize(shuffled);
+            if (!used.Contains(json)) return json;
+        }
+        return JsonSerializer.Serialize(questionIds.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).ToList());
+    }
+
+    private static List<QuizQuestion> ApplyQuestionOrder(List<QuizQuestion> questions, string? orderJson)
+    {
+        int[]? order;
+        try { order = JsonSerializer.Deserialize<int[]>(orderJson ?? "[]"); }
+        catch (JsonException) { order = null; }
+        if (order == null || order.Length != questions.Count || order.Distinct().Count() != questions.Count)
+            throw new InvalidOperationException("The saved question order is invalid. Contact an administrator.");
+        var byId = questions.ToDictionary(x => x.Id);
+        if (order.Any(id => !byId.ContainsKey(id)))
+            throw new InvalidOperationException("The saved question order no longer matches this exam. Contact an administrator.");
+        return order.Select(id => byId[id]).ToList();
+    }
+
     private async Task ValidateQuizAsync(QuizDto dto)
     {
         if (!await _programs.AnyAsync(x => x.Id == dto.TrainingProgramId)) throw new InvalidOperationException("Selected training program does not exist.");
@@ -197,6 +242,10 @@ public sealed class QuizService : IQuizService
 
     private async Task ValidateQuestionAsync(QuizQuestionDto dto)
     {
+        var errors = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        if (!System.ComponentModel.DataAnnotations.Validator.TryValidateObject(dto, new(dto), errors, true))
+            throw new InvalidOperationException(string.Join(" ", errors.Select(x => x.ErrorMessage)));
+        if (dto.IsTypedAnswer) dto.OptionA = dto.OptionB = dto.OptionC = dto.OptionD = dto.CorrectOption = "";
         await EnsureQuestionsEditableAsync(dto.QuizId);
         if (!await _quizzes.AnyAsync(x => x.Id == dto.QuizId)) throw new InvalidOperationException("Exam does not exist.");
         if (await _questions.AnyAsync(x => x.QuizId == dto.QuizId && x.SequenceOrder == dto.SequenceOrder && x.Id != dto.Id))
@@ -212,14 +261,14 @@ public sealed class QuizService : IQuizService
     private static QuizDto Map(Quiz x, string? program, int count) => new() { Id = x.Id, Title = x.Title,
         PassingScorePercentage = x.PassingScorePercentage, TrainingProgramId = x.TrainingProgramId,
         TrainingProgramTitle = program, IsActive = x.IsActive, QuestionCount = count };
-    private static QuizQuestionDto Map(QuizQuestion x) => new() { Id = x.Id, QuizId = x.QuizId, QuestionText = x.QuestionText,
+    private static QuizQuestionDto Map(QuizQuestion x) => new() { Id = x.Id, IsTypedAnswer = x.IsTypedAnswer, QuizId = x.QuizId, QuestionText = x.QuestionText,
         OptionA = x.OptionA, OptionB = x.OptionB, OptionC = x.OptionC, OptionD = x.OptionD,
         CorrectOption = x.CorrectOption, SequenceOrder = x.SequenceOrder };
-    private static QuizQuestion ToEntity(QuizQuestionDto x) => new() { QuizId = x.QuizId, QuestionText = x.QuestionText.Trim(),
-        OptionA = x.OptionA.Trim(), OptionB = x.OptionB.Trim(), OptionC = x.OptionC.Trim(), OptionD = x.OptionD.Trim(),
-        CorrectOption = x.CorrectOption.ToUpperInvariant(), SequenceOrder = x.SequenceOrder };
+    private static QuizQuestion ToEntity(QuizQuestionDto x) => new() { IsTypedAnswer = x.IsTypedAnswer, QuizId = x.QuizId, QuestionText = x.QuestionText.Trim(),
+        OptionA = x.OptionA?.Trim() ?? "", OptionB = x.OptionB?.Trim() ?? "", OptionC = x.OptionC?.Trim() ?? "", OptionD = x.OptionD?.Trim() ?? "",
+        CorrectOption = x.CorrectOption?.ToUpperInvariant() ?? "", SequenceOrder = x.SequenceOrder };
     private static QuizResultDto MapResult(QuizResult x, Quiz quiz, TrainingProgram? program) => new() { Id = x.Id,
         QuizId = x.QuizId, QuizTitle = quiz.Title, TrainingProgramTitle = program?.Title ?? string.Empty,
-        ScorePercentage = x.ScorePercentage, IsPassed = x.IsPassed, IsCompleted = x.IsCompleted,
+        RequiresReview = x.RequiresReview, ScorePercentage = x.ScorePercentage, IsPassed = x.IsPassed, IsCompleted = x.IsCompleted,
         AttemptDate = x.AttemptDate, CompletedAt = x.CompletedAt };
 }

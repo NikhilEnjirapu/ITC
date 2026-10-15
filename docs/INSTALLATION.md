@@ -4,9 +4,9 @@
 
 The release archive is artifacts/TrainingPortal-IIS.zip. The archive includes the application, generated IIS web.config, deployment scripts and documentation. Temporary publish folders have been removed; use the rebuild commands below to regenerate artifacts/publish. Source remains in this workspace. The source sharing archive, artifacts/TrainingPortal-Source.zip, excludes Git history, generated builds, local runtime data and release binaries. Uploaded videos must be transferred separately when required. Both archives use standard ZIP paths and extract with Windows Explorer, macOS Archive Utility or `unzip`.
 
-Use Windows Server 2022, IIS, SQL Server and the .NET 8 ASP.NET Core Hosting Bundle. Install IIS before the bundle (repair the bundle if installed first). Create an application pool with No Managed Code, Integrated pipeline, and a dedicated service identity. Bind the site to HTTPS with a trusted certificate. See [Microsoft IIS deployment guidance](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-8.0).
+Use Windows Server 2022, IIS, SQL Server and the .NET 10 ASP.NET Core Hosting Bundle. Install IIS before the bundle (repair the bundle if installed first). Create an application pool with No Managed Code, Integrated pipeline, and a dedicated service identity. Bind the site to HTTPS with a trusted certificate. See [Microsoft IIS deployment guidance](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-10.0).
 
-Set ASPNETCORE_ENVIRONMENT=Production. Give the identity read access to the published application, write access to App_Data/Logs, and read/write/delete access to the private video repository for uploads and failed-upload cleanup. Create the configured DataProtection:KeyPath directory before starting IIS and give only the app-pool identity and backup administrators access (the app needs read/write). Keys are protected with Windows DPAPI for that identity. Keep that identity and key directory stable across upgrades. If no explicit key path is configured, use Load User Profile=True and retain the profile/key store across upgrades for cookie data protection. See [Microsoft advanced IIS configuration](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/advanced?view=aspnetcore-8.0).
+Set ASPNETCORE_ENVIRONMENT=Production. Give the identity read access to the published application, write access to App_Data/Logs, and read/write/delete access to the private video repository for uploads and failed-upload cleanup. Create the configured DataProtection:KeyPath directory before starting IIS and give only the app-pool identity and backup administrators access (the app needs read/write). Keys are protected with Windows DPAPI for that identity. Keep that identity and key directory stable across upgrades. If no explicit key path is configured, use Load User Profile=True and retain the profile/key store across upgrades for cookie data protection. See [Microsoft advanced IIS configuration](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/advanced?view=aspnetcore-10.0).
 
 ## Database
 
@@ -36,7 +36,7 @@ Enter the correct whole-second duration and verify each file in the target brows
 
 ## Verification and operation
 
-Run the client acceptance checklist in TEST-REPORT.md with real corporate identities and at least two browser tabs. Verify SQL persistence across app-pool recycle, PDF font rendering, video codecs, large files and proxy timeouts. PDF export uses Arial from the Windows font installation; verify names in the languages used by the workforce. Reports currently load matching assignments into memory; load-test the expected workforce size before production.
+Run the client acceptance checklist in TEST-REPORT.md with real corporate identities and at least two browser tabs. Verify SQL persistence across app-pool recycle, CSV output in workforce languages, video codecs, large files and proxy timeouts. Reports currently load matching assignments into memory; load-test the expected workforce size before production.
 
 Operational logs rotate daily under App_Data/Logs (30 retained files). Audit rows remain in SQL until an organization-approved retention/archive process runs; the portal provides no audit deletion endpoint. Back up database, private media, configuration and data-protection keys. An upgrade rollback requires a matching database backup and previous application package; do not restore old binaries against a changed schema without compatibility review.
 
@@ -50,3 +50,19 @@ dotnet test ITC.TrainingPortal.Tests --logger 'trx;LogFileName=compliance-tests.
 dotnet ef migrations script --idempotent --project ITC.TrainingPortal.Infrastructure --startup-project ITC.TrainingPortal.Web --output deployment/Database.sql
 dotnet publish ITC.TrainingPortal.Web -c Release -o artifacts/publish
 ~~~
+
+
+## Typed-answer upgrade
+
+Before deploying the typed-answer feature, back up the database and apply the updated idempotent `deployment/Database.sql` (migration `AddTypedAnswerReview`). This adds question format and manual-review fields. Existing questions remain multiple choice and existing results retain their outcomes. The migration script is supplied; applying it to the target SQL Server is a deployment step.
+
+The later `PersistShuffledQuestionOrder` migration adds the saved order for each exam attempt. Apply the current `deployment/Database.sql` before using question shuffling. Existing completed results remain unchanged; an active attempt from an older version receives and saves its shuffled order when it is first resumed.
+
+
+## .NET 10 build and deployment
+
+Install the .NET SDK 10.0.401 (or a newer 10.0.4xx patch allowed by global.json) on build machines. Run `dotnet tool restore`, `dotnet restore`, `dotnet test ITC.TrainingPortal.sln`, then `dotnet publish ITC.TrainingPortal.Web -c Release -o artifacts/publish-net10`.
+
+The IIS server requires the .NET 10 ASP.NET Core Hosting Bundle, version 10.0.12 or a later servicing release. A desktop runtime alone is insufficient. Deploy the supplied `TrainingPortal-IIS.zip` or a newly published .NET 10 output directory. Keep SQL Server configuration, private video storage and data-protection keys when deploying.
+
+Developer machines should install the SDK required by `global.json`.

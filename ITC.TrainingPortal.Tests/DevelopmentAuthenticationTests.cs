@@ -405,7 +405,8 @@ public sealed partial class DevelopmentAuthenticationTests
         {
             var name = Regex.Match(input.Value, "name=\"([^\"]+)\"");
             var value = Regex.Match(input.Value, "value=\"([^\"]*)\"");
-            if (name.Success) fields[WebUtility.HtmlDecode(name.Groups[1].Value)] = WebUtility.HtmlDecode(value.Groups[1].Value);
+            // Multi-value employee selection is supplied explicitly by each test.
+            if (name.Success && name.Groups[1].Value != "employeeIds") fields[WebUtility.HtmlDecode(name.Groups[1].Value)] = WebUtility.HtmlDecode(value.Groups[1].Value);
         }
         fields["Title"] = title;
         fields["Description"] = description;
@@ -460,6 +461,8 @@ public sealed partial class DevelopmentAuthenticationTests
             });
             builder.ConfigureTestServices(services =>
             {
+                // EF 10 retains provider configuration separately from DbContextOptions.
+                services.RemoveAll<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<ApplicationDbContext>>();
                 services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
                 services.RemoveAll<ApplicationDbContext>();
                 services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(_database));

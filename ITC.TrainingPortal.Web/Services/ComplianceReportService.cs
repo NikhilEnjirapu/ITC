@@ -36,14 +36,16 @@ public sealed class ComplianceReportService(ApplicationDbContext db)
             var quiz = quizzes.SingleOrDefault(x => x.TrainingProgramId == a.TrainingProgramId);
             var attempts = results.Where(x => x.EmployeeId == a.EmployeeId && x.QuizId == quiz?.Id).OrderByDescending(x => x.AttemptDate).ToList();
             var active = attempts.Any(x => !x.IsCompleted);
-            var passed = attempts.Any(x => x.IsCompleted && x.IsPassed);
-            var latest = attempts.FirstOrDefault(x => x.IsCompleted);
-            var exam = active ? "In progress" : passed ? "Passed" : latest != null ? "Failed" : quiz == null ? "Not configured" : "Not attempted";
+            var passed = attempts.Any(x => x.IsCompleted && !x.RequiresReview && x.IsPassed);
+            var completedAttempts = attempts.Where(x => x.IsCompleted).ToList();
+            var best = completedAttempts.Where(x => !x.RequiresReview).OrderByDescending(x => x.ScorePercentage).FirstOrDefault();
+            var awaitingReview = completedAttempts.Any(x => x.RequiresReview);
+            var exam = active ? "In progress" : passed ? "Passed" : awaitingReview ? "Awaiting review" : best != null ? "Failed" : quiz == null ? "Not configured" : "Not attempted";
             var complete = programVideos.Count > 0 && completed == programVideos.Count && passed && !active;
             var started = progress.Any(x => x.EmployeeId == a.EmployeeId && programVideos.Contains(x.TrainingVideoId) && x.CurrentPositionSeconds > 0) || attempts.Count > 0;
             var status = complete ? "Completed" : a.DueDate < DateTime.UtcNow ? "Overdue" : started ? "In progress" : "Not started";
             return new ComplianceRow(a.Employee.EmployeeId, $"{a.Employee.FirstName} {a.Employee.LastName}", a.Employee.Department.Name,
-                a.TrainingProgram.Title, completed, programVideos.Count, exam, latest?.ScorePercentage, status, a.DueDate, a.Id, a.EmployeeId, a.TrainingProgramId);
+                a.TrainingProgram.Title, completed, programVideos.Count, exam, best?.ScorePercentage, status, a.DueDate, a.Id, a.EmployeeId, a.TrainingProgramId);
         });
         if (!string.IsNullOrWhiteSpace(filter.Status)) rows = rows.Where(x => x.Status == filter.Status);
         return rows.OrderBy(x => x.EmployeeId).ThenBy(x => x.Program).ToList();

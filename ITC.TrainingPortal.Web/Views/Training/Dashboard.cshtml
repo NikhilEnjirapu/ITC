@@ -13,13 +13,13 @@ else if(remaining.Count==0){<p>All assigned training is complete.</p><a asp-cont
 else {
     var next=remaining[0];
     <h3 class="h5">@next.Program</h3><p>@next.CompletedVideos / @next.TotalVideos videos completed. Exam: @next.Exam.</p>
-    @if(next.DueDate.HasValue){<p>Due @next.DueDate.Value.ToString("dd MMM yyyy") (UTC)</p>}
+    @if(next.DueDate.HasValue){<p>Due @PortalTime.ToLocal(next.DueDate.Value).ToString("dd MMM yyyy") (IST)</p>}
     @if(next.Exam=="In progress"){<a asp-controller="Quiz" asp-action="Mine" class="btn btn-primary">Resume exam</a>}
     else {<a asp-action="Content" asp-route-id="@next.ProgramId" class="btn btn-primary">Continue learning</a>}
 }
 </section>
 <section class="content-card p-4"><h2 class="h4">Upcoming deadlines</h2>
 @if(!remaining.Any(x=>x.DueDate.HasValue)){<p>No outstanding deadlines.</p>}
-else {<ul>@foreach(var item in remaining.Where(x=>x.DueDate.HasValue).Take(5)){<li><a asp-action="Content" asp-route-id="@item.ProgramId">@item.Program</a> — @item.DueDate!.Value.ToString("dd MMM yyyy") (UTC) — @item.Status</li>}</ul>}
+else {<ul>@foreach(var item in remaining.Where(x=>x.DueDate.HasValue).Take(5)){<li><a asp-action="Content" asp-route-id="@item.ProgramId">@item.Program</a> — @PortalTime.ToLocal(item.DueDate!.Value).ToString("dd MMM yyyy") (IST) — @item.Status</li>}</ul>}
 <a asp-controller="Quiz" asp-action="Results">View saved exam results</a> · <a asp-controller="Progress" asp-action="Mine">View overall progress</a>
 </section>

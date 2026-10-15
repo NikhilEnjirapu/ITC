@@ -12,7 +12,7 @@ public sealed partial class DevelopmentAuthenticationTests
     [InlineData(true, true)]
     [InlineData(false, true)]
     [InlineData(true, false)]
-    public async Task Completed_Exam_Shows_Result_And_Cannot_Start_Again(bool passed, bool active)
+    public async Task Completed_Exam_Shows_Best_Result_And_Allows_Another_Attempt_When_Active(bool passed, bool active)
     {
         using var factory=new LocalFactory();
         await SeedUnlockProgram(factory,ExamUnlockCondition.AllVideos,3);
@@ -29,14 +29,12 @@ public sealed partial class DevelopmentAuthenticationTests
         {
             var html=await client.GetStringAsync(path);
             Assert.Contains($"/employee/results/{resultId}",html);
-            Assert.DoesNotContain(">Start Exam<",html);
         }
-        using var intro=await client.GetAsync("/employee/exams/10");
-        Assert.Equal($"/employee/results/{resultId}",intro.Headers.Location?.OriginalString);
-        var page=await client.GetStringAsync("/employee/exams");
-        using var start=await client.PostAsync("/employee/exams/10/start",Form(Token(page)));
-        Assert.Equal(HttpStatusCode.Redirect,start.StatusCode);
+        var intro=await client.GetStringAsync("/employee/exams/10");
+        Assert.Contains("1 of 3 used", intro);
+        using var start=await client.PostAsync("/employee/exams/10/start",Form(Token(intro)));
+        Assert.Equal(active ? HttpStatusCode.OK : HttpStatusCode.Redirect,start.StatusCode);
         using var verification=factory.Services.CreateScope();
-        Assert.Equal(1,await verification.ServiceProvider.GetRequiredService<ApplicationDbContext>().QuizResults.CountAsync());
+        Assert.Equal(active ? 2 : 1,await verification.ServiceProvider.GetRequiredService<ApplicationDbContext>().QuizResults.CountAsync());
     }
 }

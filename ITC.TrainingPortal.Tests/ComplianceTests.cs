@@ -1,11 +1,9 @@
-using System.IO.Compression;
-using System.Xml.Linq;
+using System.Text;
 using ITC.TrainingPortal.Application.Services;
 using ITC.TrainingPortal.Domain.Entities;
 using ITC.TrainingPortal.Infrastructure.Data;
 using ITC.TrainingPortal.Web.Services;
 using Microsoft.EntityFrameworkCore;
-using PdfSharp.Pdf.IO;
 
 namespace ITC.TrainingPortal.Tests;
 
@@ -77,23 +75,33 @@ public sealed class ComplianceTests
     }
 
     [Fact]
-    public void Excel_Is_An_OpenXml_Workbook_And_User_Text_Is_Not_A_Formula()
+    public async Task Compliance_Report_Shows_Highest_Score_Rather_Than_Latest_Score()
     {
-        using var stream = new MemoryStream(ReportExporter.Excel([Row("=1+1 < & పేరు")]));
-        using var zip = new ZipArchive(stream);
-        Assert.NotNull(zip.GetEntry("xl/workbook.xml"));
-        using var sheet = zip.GetEntry("xl/worksheets/sheet1.xml")!.Open();
-        var xml = XDocument.Load(sheet);
-        Assert.Contains(xml.Descendants().Where(x => x.Name.LocalName == "t"), x => x.Value == "=1+1 < & పేరు");
-        Assert.Empty(xml.Descendants().Where(x => x.Name.LocalName == "f"));
+        await using var db = Database();
+        db.Departments.Add(new Department { Id = 1, Name = "Operations" });
+        db.Employees.Add(Employee());
+        db.TrainingPrograms.Add(new TrainingProgram { Id = 1, Title = "Safety" });
+        db.TrainingAssignments.Add(new TrainingAssignment { EmployeeId = 1, TrainingProgramId = 1 });
+        db.Quizzes.Add(new Quiz { Id = 1, TrainingProgramId = 1 });
+        db.QuizResults.AddRange(
+            new QuizResult { EmployeeId = 1, QuizId = 1, IsCompleted = true, IsPassed = true, ScorePercentage = 90, AttemptDate = DateTime.UtcNow.AddMinutes(-2) },
+            new QuizResult { EmployeeId = 1, QuizId = 1, IsCompleted = true, ScorePercentage = 50, AttemptDate = DateTime.UtcNow.AddMinutes(-1) });
+        await db.SaveChangesAsync();
+
+        var row = Assert.Single(await new ComplianceReportService(db).GetAsync(new()));
+
+        Assert.Equal(90, row.Score);
+        Assert.Equal("Passed", row.Exam);
     }
 
     [Fact]
-    public void Pdf_Is_Readable_And_Paginates_Long_Reports()
+    public void Csv_Is_Utf8_And_User_Text_Is_Not_A_Formula()
     {
-        using var stream = new MemoryStream(ReportExporter.Pdf(Enumerable.Range(0, 15).Select(x => Row("Employee " + x)).ToList()));
-        using var pdf = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
-        Assert.True(pdf.PageCount > 1);
+        var bytes = ReportExporter.Csv([Row("=1+1 < & Employee")]);
+        Assert.True(bytes.Take(3).SequenceEqual(Encoding.UTF8.GetPreamble()));
+        var csv = Encoding.UTF8.GetString(bytes);
+        Assert.Contains("\"'=1+1 < & Employee\"", csv);
+        Assert.Contains("\"Best score\"", csv);
     }
 
     private static Employee Employee() => new() { Id = 1, EmployeeId = "123", FirstName = "Test", LastName = "Employee", Email = "test@example.com", DepartmentId = 1, WorkerType = "Employee" };
