@@ -92,3 +92,11 @@ EF in-memory tests do not validate SQL Server transaction rollback or concurrenc
 
 - Final IIS ZIP extracted and started in Production: login/privacy/assets returned 200, protected pages redirected to login, and development login returned 404.
 - Final source ZIP extracted into an empty folder, restored, rebuilt and tested: 251 passed, 0 failed/skipped. See source-archive-tests.trx in the handover validation folder.
+
+## Archive update - 2026-10-16
+
+- Updated Release suite: 251 passed, zero failed/skipped; see archive-update.trx in the client validation folder.
+- Program deletion tests now verify archived records, retained report CSV output and report filter availability, exclusion from active program/assignment choices, and repeated archive requests.
+- Migration 12 (ArchiveTrainingPrograms) adds IsArchived. EF reports no pending model changes.
+- Updated idempotent SQL applied to the existing local EmployeeTrainingPortal database. Authenticated dashboard returned HTTP 200 without the unavailable-data warning.
+- The earlier fresh-database and extracted-source test evidence above applies to the 15 October baseline. Client environment acceptance remains pending.

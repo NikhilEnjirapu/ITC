@@ -14,7 +14,7 @@ public sealed class AdminWorkflowService(ApplicationDbContext db)
 {
     public async Task<List<ProgramReadiness>> ProgramsAsync()
     {
-        return await db.TrainingPrograms.AsNoTracking().OrderBy(p => p.Title)
+        return await db.TrainingPrograms.AsNoTracking().Where(p => !p.IsArchived).OrderBy(p => p.Title)
             .Select(p => new ProgramReadiness(p.Id, p.Title,
                 !p.Videos.Any() ? "Add videos" : p.Quiz == null ? "Create exam" :
                 !p.Quiz.Questions.Any() ? "Add exam questions" : !p.Quiz.IsActive ? "Activate exam" :

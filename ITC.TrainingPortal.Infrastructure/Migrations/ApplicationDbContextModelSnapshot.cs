@@ -419,6 +419,9 @@ namespace ITC.TrainingPortal.Infrastructure.Migrations
                     b.Property<int?>("ExamUnlockVideoId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()

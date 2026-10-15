@@ -5,18 +5,14 @@
     <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
     <h4>@Model.Title</h4>
     <p>@Model.Description</p>
-    <div class="alert alert-danger">
-        <strong>This permanently deletes the training program and its linked records:</strong>
-        <ul>
-            <li>Training videos and employee viewing progress</li>
-            <li>Employee assignments</li>
-            <li>The exam, questions, attempts, and results</li>
-        </ul>
-        <p class="mb-0">This cannot be undone. Employee accounts, other programs, and uploaded video files are kept.</p>
+    <div class="alert alert-warning">
+        <strong>This archives the training program and preserves its reports.</strong>
+        <p>It will be removed from the program list and cannot be assigned to new employees.</p>
+        <p class="mb-0">Existing assignments, viewing progress, exam questions, attempts, and results are retained. Employees already assigned can continue their training.</p>
     </div>
     <form asp-action="Delete" method="post">
         <input type="hidden" asp-for="Id" />
-        <button type="submit" class="btn btn-danger">Permanently delete training program</button>
+        <button type="submit" class="btn btn-danger">Archive training program</button>
         <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
     </form>
 </div>

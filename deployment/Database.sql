@@ -1054,3 +1054,24 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015205051_ArchiveTrainingPrograms'
+)
+BEGIN
+    ALTER TABLE [TrainingPrograms] ADD [IsArchived] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015205051_ArchiveTrainingPrograms'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261015205051_ArchiveTrainingPrograms', N'10.0.13');
+END;
+
+COMMIT;
+GO
+

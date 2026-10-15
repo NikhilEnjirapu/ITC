@@ -54,7 +54,7 @@ Start with INSTALLATION.md. Configure production SSO, SQL connectivity, private 
 
 - Administrator self-deletion is not prevented when there is no learning history.
 - Assignment removal or exam deactivation during active attempts can prevent normal resume while the active attempt still blocks learning.
-- Adding videos to used programs can change completion status. Program deletion removes operational learning history; assignment removal hides retained results from current-assignment listings.
+- Adding videos to used programs can change completion status. Program deletion now archives programs and preserves operational learning history; assignment removal hides retained results from current-assignment listings.
 - Media replacement/deletion does not clean up old stored files.
 - Video count is unrestricted and selected-video exam unlock is supported. These differ from the supplied PID and require agreement.
 - Superseded by the client-confirmed best-of-three policy below: completed exams can be retaken while attempts remain and the exam is active.

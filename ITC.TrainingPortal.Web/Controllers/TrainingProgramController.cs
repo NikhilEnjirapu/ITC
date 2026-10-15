@@ -69,5 +69,5 @@ public sealed class TrainingProgramController : Controller
         .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem($"{x.SequenceOrder}. {x.Title}", x.Id.ToString())).ToList(); }
     public async Task<IActionResult> Delete(int id) => await _service.GetByIdAsync(id) is { } dto ? View(dto) : NotFound();
     [HttpPost,ActionName("Delete"),ValidateAntiForgeryToken] public async Task<IActionResult> DeleteConfirmed(int id)
-    { try{await _service.DeleteAsync(id);TempData["Success"]="Training program and linked records deleted.";return RedirectToAction(nameof(Index));}catch(InvalidOperationException ex){ModelState.AddModelError("",ex.Message);var dto=await _service.GetByIdAsync(id);return dto==null?NotFound():View("Delete",dto);} }
+    { try{await _service.DeleteAsync(id);TempData["Success"]="Training program archived. Reports and learning history have been retained.";return RedirectToAction(nameof(Index));}catch(InvalidOperationException ex){ModelState.AddModelError("",ex.Message);var dto=await _service.GetByIdAsync(id);return dto==null?NotFound():View("Delete",dto);} }
 }

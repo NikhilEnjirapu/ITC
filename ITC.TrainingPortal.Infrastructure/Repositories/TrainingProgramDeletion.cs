@@ -16,24 +16,9 @@ public sealed class TrainingProgramDeletion(ApplicationDbContext db) : ITraining
         {
             var program = await db.TrainingPrograms.FindAsync(id);
             if (program == null) return;
-            // Break the program -> unlock video -> program cycle within the transaction.
-            if (program.ExamUnlockVideoId.HasValue)
-            {
-                program.ExamUnlockCondition = ExamUnlockCondition.AllVideos;
-                program.ExamUnlockVideoId = null;
-                await db.SaveChangesAsync();
-            }
-            var videos = await db.TrainingVideos.Where(x => x.TrainingProgramId == id).ToListAsync();
-            var videoIds = videos.Select(x => x.Id).ToArray();
-            var exams = await db.Quizzes.Where(x => x.TrainingProgramId == id).ToListAsync();
-            var examIds = exams.Select(x => x.Id).ToArray();
-            db.VideoProgresses.RemoveRange(await db.VideoProgresses.Where(x => videoIds.Contains(x.TrainingVideoId)).ToListAsync());
-            db.QuizResults.RemoveRange(await db.QuizResults.Where(x => examIds.Contains(x.QuizId)).ToListAsync());
-            db.QuizQuestions.RemoveRange(await db.QuizQuestions.Where(x => examIds.Contains(x.QuizId)).ToListAsync());
-            db.TrainingAssignments.RemoveRange(await db.TrainingAssignments.Where(x => x.TrainingProgramId == id).ToListAsync());
-            db.Quizzes.RemoveRange(exams);
-            db.TrainingVideos.RemoveRange(videos);
-            db.TrainingPrograms.Remove(program);
+            // Keep the complete graph: reports and historical results reference it.
+            program.IsArchived = true;
+            program.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
             if (transaction != null) await transaction.CommitAsync();
         }
@@ -41,7 +26,7 @@ public sealed class TrainingProgramDeletion(ApplicationDbContext db) : ITraining
         {
             if (transaction != null) await transaction.RollbackAsync();
             db.ChangeTracker.Clear();
-            throw new InvalidOperationException("The training program could not be deleted because its records changed or are still referenced. Reload the page and try again.", ex);
+            throw new InvalidOperationException("The training program could not be archived because its records changed or are still referenced. Reload the page and try again.", ex);
         }
     }
 }

@@ -14,7 +14,7 @@ public sealed partial class DevelopmentAuthenticationTests
     [InlineData("assignment")]
     [InlineData("exam")]
     [InlineData("all")]
-    public async Task Program_Delete_Removes_Linked_Records(string dependency)
+    public async Task Program_Delete_Archives_And_Preserves_Reports(string dependency)
     {
         using var factory = new LocalFactory();
         await factory.AddIsolatedTestEmployees();
@@ -52,13 +52,14 @@ public sealed partial class DevelopmentAuthenticationTests
         const string url = "/admin/training-programs/Delete/10";
         var html = await client.GetStringAsync(url);
         Assert.Contains("Deletion test", html);
-        Assert.Contains("This permanently deletes", html);
+        Assert.Contains("This archives the training program", html);
         Assert.Matches("<form[^>]*method=\"post\"", html);
         using (var scope = factory.Services.CreateScope())
             Assert.True(await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().TrainingPrograms.AnyAsync(x => x.Id == 10));
 
         using var invalid = await client.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string, string> { ["Id"] = "10" }));
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        var reportBefore = await client.GetStringAsync("/admin/reports/Csv?TrainingProgramId=10");
         using var response = await client.PostAsync(url, Form(Token(html)));
             Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
             Assert.Equal("/admin/training-programs", response.Headers.Location?.OriginalString);
@@ -66,13 +67,31 @@ public sealed partial class DevelopmentAuthenticationTests
             Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
         using var verification = factory.Services.CreateScope();
         var remaining = verification.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.Equal(11, (await remaining.TrainingPrograms.SingleAsync()).Id);
-        Assert.Equal(21, (await remaining.TrainingVideos.SingleAsync()).Id);
-        Assert.Equal(11, (await remaining.TrainingAssignments.SingleAsync()).TrainingProgramId);
-        Assert.Equal(31, (await remaining.Quizzes.SingleAsync()).Id);
-        Assert.Equal(21, (await remaining.VideoProgresses.SingleAsync()).TrainingVideoId);
-        Assert.Equal(31, (await remaining.QuizResults.SingleAsync()).QuizId);
-        Assert.Equal(31, (await remaining.QuizQuestions.SingleAsync()).QuizId);
+        Assert.True((await remaining.TrainingPrograms.FindAsync(10))!.IsArchived);
+        Assert.False((await remaining.TrainingPrograms.FindAsync(11))!.IsArchived);
+        Assert.Equal(2, await remaining.TrainingPrograms.CountAsync());
+        Assert.Equal(dependency is "video" or "all" ? 2 : 1, await remaining.TrainingVideos.CountAsync());
+        Assert.Equal(dependency is "assignment" or "all" ? 2 : 1, await remaining.TrainingAssignments.CountAsync());
+        Assert.Equal(dependency is "exam" or "all" ? 2 : 1, await remaining.Quizzes.CountAsync());
+        Assert.Equal(dependency == "all" ? 2 : 1, await remaining.VideoProgresses.CountAsync());
+        Assert.Equal(dependency == "all" ? 2 : 1, await remaining.QuizResults.CountAsync());
+        Assert.Equal(dependency == "all" ? 2 : 1, await remaining.QuizQuestions.CountAsync());
+        if (dependency == "all")
+        {
+            Assert.Equal(20, (await remaining.TrainingPrograms.FindAsync(10))!.ExamUnlockVideoId);
+            Assert.Contains("Deletion test", reportBefore);
+        }
+        Assert.Equal(reportBefore, await client.GetStringAsync("/admin/reports/Csv?TrainingProgramId=10"));
+        var reportPage = await client.GetStringAsync("/admin/reports?TrainingProgramId=10");
+        Assert.Contains("Deletion test", reportPage);
+        var service = verification.ServiceProvider.GetRequiredService<ITC.TrainingPortal.Application.Interfaces.ITrainingProgramService>();
+        Assert.DoesNotContain(await service.GetAllAsync(), x => x.Id == 10);
+        var workflow = verification.ServiceProvider.GetRequiredService<ITC.TrainingPortal.Web.Services.AdminWorkflowService>();
+        Assert.DoesNotContain(await workflow.ProgramsAsync(), x => x.Id == 10);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => workflow.ValidateAssignmentAsync(2, 10));
+        // Repeated requests must also leave history intact.
+        await verification.ServiceProvider.GetRequiredService<ITC.TrainingPortal.Application.Interfaces.ITrainingProgramDeletion>().DeleteAsync(10);
+        Assert.Equal(reportBefore, await client.GetStringAsync("/admin/reports/Csv?TrainingProgramId=10"));
         Assert.Equal(2, await remaining.Employees.CountAsync());
     }
 }

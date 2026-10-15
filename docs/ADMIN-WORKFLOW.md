@@ -13,7 +13,7 @@
 
 - Started assignments can have their dates updated but cannot be moved to another employee or program.
 - Removing an assignment retains progress and exam history. Reassigning the same program reuses that history.
-- Program deletion permanently removes its linked learning records as explained on the confirmation page; uploaded files are retained.
+- Program deletion archives the program, removes it from new assignment choices, and retains reports and all linked learning records. Existing employees can continue assigned training.
 - Employees with learning records cannot be deleted. Review assignments and eligibility instead.
 - Eligibility exclusions have department/category selectors and a Preview impact action. Preview does not save. Active rules apply to administrators as well as employees.
 - Audit history supports employee, action, and UTC date filters.

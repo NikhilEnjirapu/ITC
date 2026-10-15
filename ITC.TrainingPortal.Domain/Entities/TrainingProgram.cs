@@ -2,6 +2,7 @@ namespace ITC.TrainingPortal.Domain.Entities;
 
 public class TrainingProgram : BaseEntity
 {
+    public bool IsArchived { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public byte[] RowVersion { get; set; } = [];

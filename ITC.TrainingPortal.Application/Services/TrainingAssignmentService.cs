@@ -104,7 +104,10 @@ public sealed class TrainingAssignmentService : ITrainingAssignmentService
     private async Task ValidateAsync(TrainingAssignmentDto dto)
     {
         if (!await _employees.AnyAsync(x => x.Id == dto.EmployeeId)) throw new InvalidOperationException("Selected employee does not exist.");
-        if (!await _programs.AnyAsync(x => x.Id == dto.TrainingProgramId)) throw new InvalidOperationException("Selected training program does not exist.");
+        var existing = dto.Id == 0 ? null : await _assignments.GetByIdAsync(dto.Id);
+        var retainingAssignment = existing != null && existing.EmployeeId == dto.EmployeeId && existing.TrainingProgramId == dto.TrainingProgramId;
+        if (!await _programs.AnyAsync(x => x.Id == dto.TrainingProgramId && (!x.IsArchived || retainingAssignment)))
+            throw new InvalidOperationException("Selected training program does not exist or is archived.");
         if (dto.DueDate.HasValue && dto.DueDate.Value < dto.AssignedAt) throw new InvalidOperationException("Due date cannot be earlier than the assignment date.");
         if (await _assignments.AnyAsync(x => x.EmployeeId == dto.EmployeeId && x.TrainingProgramId == dto.TrainingProgramId && x.Id != dto.Id)) throw new InvalidOperationException("This training program is already assigned to the employee.");
     }

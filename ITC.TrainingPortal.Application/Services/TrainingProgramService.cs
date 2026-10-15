@@ -21,12 +21,12 @@ public sealed class TrainingProgramService : ITrainingProgramService
     public async Task<IEnumerable<TrainingProgramDto>> GetAllAsync()
     {
         var quizzes = (await _quizzes.GetAllAsync()).ToDictionary(x => x.TrainingProgramId, x => x.Title);
-        return (await _programs.GetAllAsync()).Select(p => Map(p, quizzes.GetValueOrDefault(p.Id)));
+        return (await _programs.GetAllAsync()).Where(p => !p.IsArchived).Select(p => Map(p, quizzes.GetValueOrDefault(p.Id)));
     }
     public async Task<TrainingProgramDto?> GetByIdAsync(int id)
     {
         var program = await _programs.GetByIdAsync(id);
-        if (program == null) return null;
+        if (program == null || program.IsArchived) return null;
         var quiz = (await _quizzes.FindAsync(x => x.TrainingProgramId == id)).SingleOrDefault();
         return Map(program, quiz?.Title);
     }
@@ -47,6 +47,7 @@ public sealed class TrainingProgramService : ITrainingProgramService
         Normalize(dto);
         await ValidateUnlockAsync(dto);
         var entity = await _programs.GetByIdAsync(dto.Id) ?? throw new ConcurrencyConflictException("The training program was deleted by another user.");
+        if (entity.IsArchived) throw new InvalidOperationException("This training program is archived.");
         if (!entity.RowVersion.SequenceEqual(dto.RowVersion)) throw new ConcurrencyConflictException("The training program was changed by another user. Reload it and try again.");
         entity.Title = dto.Title; entity.Description = dto.Description; entity.UpdatedAt = DateTime.UtcNow;
         entity.ExamUnlockCondition = dto.ExamUnlockCondition; entity.ExamUnlockVideoId = dto.ExamUnlockVideoId;

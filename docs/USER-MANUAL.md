@@ -21,7 +21,7 @@ After all videos finish, open Exams and start the assessment. Training becomes u
 
 The private media route prevents anonymous access, but a browser is not a DRM environment. Do not distribute training recordings or copy media outside the portal.
 
-Deleting a training program: choose Delete from Training Programs and review the permanent-deletion warning. Confirming removes the program, video records, assignments, employee viewing progress, exam questions, attempts, and results together. Employee accounts, other programs, audit history, and uploaded video files are retained. This action cannot be undone. Individual video and exam deletion restrictions still apply when deleting those items separately.
+Deleting a training program: choose Delete from Training Programs and confirm Archive training program. This removes the program from the program list and new assignment choices. Reports, assignments, viewing progress, exam questions, attempts, results, and uploaded files are retained. Employees already assigned can continue training. Previously deleted records are not restored by this change.
 
 
 ## Questions: manual entry, CSV upload and keyword marking
