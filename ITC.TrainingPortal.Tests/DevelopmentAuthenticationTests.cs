@@ -23,6 +23,34 @@ namespace ITC.TrainingPortal.Tests;
 public sealed partial class DevelopmentAuthenticationTests
 {
     [Theory]
+    [InlineData("1", true)]
+    [InlineData("2", true)]
+    [InlineData("3", true)]
+    [InlineData("4", true)]
+    [InlineData("5", true)]
+    [InlineData("0", false)]
+    [InlineData("6", false)]
+    [InlineData("invalid", false)]
+    public async Task Employee_Selector_Binds_Only_Allowed_Accounts(string selection, bool allowed)
+    {
+        using var factory = new LocalFactory();
+        using var client = Browser(factory);
+        var html = await client.GetStringAsync("/login");
+        Assert.Contains("Employee 5 (900006)", html);
+        using var response = await client.PostAsync("/login/dev/employee", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = Token(html), ["employeeNumber"] = selection
+        }));
+        Assert.Equal(allowed ? HttpStatusCode.Redirect : HttpStatusCode.BadRequest, response.StatusCode);
+        if (!allowed) { Assert.False(response.Headers.Contains("Set-Cookie")); return; }
+        var options = factory.Services.GetRequiredService<IOptionsMonitor<CookieAuthenticationOptions>>().Get(CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = options.TicketDataFormat.Unprotect(CookieValue(response))!.Principal;
+        Assert.Equal(DevelopmentAuthentication.TestEmployeeEmail(int.Parse(selection)), principal.FindFirstValue("preferred_username"));
+        Assert.True(principal.IsInRole("Employee"));
+        Assert.False(principal.IsInRole("Administrator"));
+    }
+
+    [Theory]
     [InlineData("admin", "Administrator", DevelopmentAuthentication.AdminEmail, "/admin")]
     [InlineData("employee", "Employee", DevelopmentAuthentication.EmployeeEmail, "/employee")]
     public async Task SignIn_Issues_Real_Authenticated_Cookie_With_Only_The_Selected_Role(

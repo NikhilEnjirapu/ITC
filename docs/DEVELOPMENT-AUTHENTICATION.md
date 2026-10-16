@@ -5,10 +5,14 @@ This mechanism tests the existing Admin and Employee UI before corporate SSO is 
 ## Local setup (first time)
 
 1. Install SQL Server Express (instance `localhost\SQLEXPRESS`) or change `ConnectionStrings:DefaultConnection` in `ITC.TrainingPortal.Web/appsettings.json`.
-2. Create an empty `EmployeeTrainingPortal` database and run `deployment/Database.sql` against it.
-3. Run `deployment/DevelopmentLoginAccounts.sql` against the same database. Skipping this step makes both sign-in buttons end on **Access denied**.
+2. Run `./deployment/SeedDevelopmentData.ps1` from PowerShell. This explicit Development-only command applies migrations and creates one administrator, five test employees, three programs, three exams (10 questions each), and all 15 employee assignments. It copies the supplied videos into the protected video repository. Re-running preserves existing records and progress.
+3. Start or restart the portal and choose Employee 1-5 in the development sign-in selector (employee IDs 900002-900006).
 
-The portal then opens with no programs, videos or exams; create them from the Administrator pages.
+The modules are Code of Conduct, Good Corporate Citizenship, and Personal Conduct. Each exam unlocks after its video is completed and has an 80% passing score. Employee 1 keeps the original email/user ID; employees 2-5 use `local-employee-N@training-portal.test` and `training-portal-dev-employee-N`.
+
+### GitHub and videos
+
+The root `Videos/*.mp4` files use Git LFS via `.gitattributes`. Before adding and pushing the files, run `git lfs install`. Include `Videos`, `Exam`, `.gitattributes`, and the code/setup changes in your commit. After cloning, run `git lfs pull` before running the setup script. Runtime copies in `App_Data/Videos` stay ignored. The setup reads source assets from the repository, so run it from a source checkout rather than a published deployment.
 
 ## Run and sign in
 
@@ -65,7 +69,7 @@ If local configuration instead selects the existing `UserId` matching mode and s
 
 **A matching eligible employee database record is required for BOTH choices.** The current resolver queries `Employees`; the existing middleware also checks administrators. Without a matching record, sign-in can issue the cookie, but the redirected protected request is denied and the cookie is cleared by the existing middleware. The login buttons do not provision accounts or departments.
 
-For local UI testing, run `deployment/DevelopmentLoginAccounts.sql` once against the local database, after `deployment/Database.sql`. It creates a "Development Testing" department and both records above (employee IDs 900001 and 900002, worker category `Employee`, matching email and user ID). It is safe to re-run and refuses to run before the schema exists. Sign-in itself never creates records, and the application has no eligibility exemption for these accounts. Never run this script against a client or production database.
+For the complete local test setup, run `deployment/SeedDevelopmentData.ps1`. The older `DevelopmentLoginAccounts.sql` creates only the administrator and Employee 1 and is not the full five-employee setup. Sign-in itself never creates records, and the application has no eligibility exemption for these accounts. Never run this script against a client or production database.
 
 Matching records permit the relevant UI to load. Employee training, exam and result lists can still be empty until actual local assignments/content/results exist. Missing data is not fabricated by authentication.
 

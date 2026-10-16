@@ -152,6 +152,17 @@ builder.Services.AddScoped<ICurrentEmployeeAccessor, CurrentEmployeeAccessor>();
 
 var app = builder.Build();
 
+if (args.Contains("--seed-development-data"))
+{
+    if (!app.Environment.IsDevelopment() || entraOptions.Enabled)
+        throw new InvalidOperationException("Test data setup requires Development with Entra ID disabled.");
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+    await ITC.TrainingPortal.Web.Services.DevelopmentDataSeeder.SeedAsync(db, app.Environment.ContentRootPath, app.Configuration);
+    return;
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

@@ -24,17 +24,18 @@ public sealed class DevelopmentLoginController(
     public Task<IActionResult> Administrator() => SignInAsync(PortalRole.Administrator, "/admin");
 
     [HttpPost("employee"), ValidateAntiForgeryToken]
-    public Task<IActionResult> Employee() => SignInAsync(PortalRole.Employee, "/employee");
+    public Task<IActionResult> Employee(int employeeNumber = 1) => SignInAsync(PortalRole.Employee, "/employee", employeeNumber);
 
     private bool Available() => environment.IsDevelopment() && !entra.Value.Enabled &&
         HttpContext.Connection.RemoteIpAddress is { } address && IPAddress.IsLoopback(address);
 
-    private async Task<IActionResult> SignInAsync(PortalRole role, string destination)
+    private async Task<IActionResult> SignInAsync(PortalRole role, string destination, int employeeNumber = 1)
     {
         if (!Available()) return NotFound();
+        if (!ModelState.IsValid) return BadRequest("Choose a valid development employee.");
         try
         {
-            var principal = DevelopmentAuthentication.CreatePrincipal(role, authorization.Value, identity.Value);
+            var principal = DevelopmentAuthentication.CreatePrincipal(role, authorization.Value, identity.Value, employeeNumber);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
                 new AuthenticationProperties { IsPersistent = false, AllowRefresh = false, ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30) });
             return LocalRedirect(destination);

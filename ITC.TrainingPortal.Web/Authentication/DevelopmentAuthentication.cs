@@ -13,8 +13,13 @@ public static class DevelopmentAuthentication
     public const string AdminUserId = "training-portal-dev-admin";
     public const string EmployeeUserId = "training-portal-dev-employee";
 
-    public static ClaimsPrincipal CreatePrincipal(PortalRole role, PortalAuthorizationOptions authorization, EmployeeIdentityOptions identity)
+    public static string TestEmployeeEmail(int number) => number == 1 ? EmployeeEmail : $"local-employee-{number}@training-portal.test";
+    public static string TestEmployeeUserId(int number) => number == 1 ? EmployeeUserId : $"training-portal-dev-employee-{number}";
+
+    public static ClaimsPrincipal CreatePrincipal(PortalRole role, PortalAuthorizationOptions authorization, EmployeeIdentityOptions identity, int employeeNumber = 1)
     {
+        if (employeeNumber is < 1 or > 5)
+            throw new InvalidOperationException("Choose one of the five development employees.");
         if (authorization.AllowDevelopmentBypass)
             throw new InvalidOperationException("Development sign-in requires AllowDevelopmentBypass to remain false.");
         if (string.IsNullOrWhiteSpace(authorization.RoleClaimType) ||
@@ -33,12 +38,12 @@ public static class DevelopmentAuthentication
             throw new InvalidOperationException("Configure a distinct employee identifier claim and role claim for local sign-in.");
 
         var identifier = mode == EmployeeIdentityMatchMode.Email
-            ? administrator ? AdminEmail : EmployeeEmail
-            : administrator ? AdminUserId : EmployeeUserId;
+            ? administrator ? AdminEmail : TestEmployeeEmail(employeeNumber)
+            : administrator ? AdminUserId : TestEmployeeUserId(employeeNumber);
         var claims = new Dictionary<string, string>
         {
-            [ClaimTypes.NameIdentifier] = administrator ? AdminUserId : EmployeeUserId,
-            [ClaimTypes.Name] = administrator ? "Local Development Administrator" : "Local Development Employee",
+            [ClaimTypes.NameIdentifier] = administrator ? AdminUserId : TestEmployeeUserId(employeeNumber),
+            [ClaimTypes.Name] = administrator ? "Local Development Administrator" : $"Local Development Employee {employeeNumber}",
             [authorization.RoleClaimType] = administrator ? authorization.AdministratorRole : authorization.EmployeeRole,
             [claimType] = identifier
         };

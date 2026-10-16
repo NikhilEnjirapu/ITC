@@ -37,6 +37,13 @@
                         <button type="submit" class="btn btn-outline-primary w-100">Sign in as Administrator</button>
                     </form>
                     <form asp-controller="DevelopmentLogin" asp-action="Employee" method="post">
+                        <label for="employeeNumber" class="form-label">Test employee</label>
+                        <select id="employeeNumber" name="employeeNumber" class="form-select mb-2" required>
+                            @for (var number = 1; number <= 5; number++)
+                            {
+                                <option value="@number">Employee @number (@(900001 + number))</option>
+                            }
+                        </select>
                         <button type="submit" class="btn btn-outline-primary w-100">Sign in as Employee</button>
                     </form>
                 </section>
